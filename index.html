@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#5c4b3a" />
-  <title>MQR & DCT Consult — Draft 0.5.1</title>
+  <title>MQR & DCT Consult — Draft 0.6</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="stylesheet" href="styles.css" />
 </head>
@@ -15,7 +15,7 @@
       <h1>MQR & DCT Consult</h1>
       <p class="subtitle">Milk quality review, treatment analysis and dry cow consultation from farm data exports.</p>
     </div>
-    <span class="pill">Draft 0.5.1</span>
+    <span class="pill">Draft 0.6</span>
   </header>
 
   <main class="page-shell">
@@ -32,25 +32,57 @@
         <label>Farm name<input id="farmName" autocomplete="off" placeholder="Farm / client" /></label>
         <label>Veterinarian<input id="vetName" autocomplete="off" placeholder="Veterinarian" /></label>
         <label>Season start year<input id="seasonYear" type="number" min="2000" max="2100" /></label>
-        <label>Current-season herd tests<select id="herdTests"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4" selected>4</option></select></label>
+        <label>Current-season herd tests<select id="herdTests"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4" selected>4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option></select></label>
         <label>Peak cows (No of cows Mated)<input id="peakCows" type="number" min="0" placeholder="e.g. 622" /></label>
         <label>First calvers (2 year olds)<input id="firstCalvers" type="number" min="0" placeholder="e.g. 152" /></label>
         <label>SCC threshold — low/high (×1000)<input id="sccTs" type="number" min="0" placeholder="e.g. 150" /></label>
         <label>SCC cut-off — LA DCT (×1000)<input id="sccLa" type="number" min="0" placeholder="e.g. 250" /></label>
       </div>
-      <details class="extra-details">
-        <summary>Additional report details</summary>
-        <div class="form-grid">
-          <label>Dairy company<input id="dairyCompany" autocomplete="off" /></label>
-          <label>Supply number<input id="supplyNumber" autocomplete="off" /></label>
-          <label>LIC / MyHerd PTPT code<input id="ptptCode" autocomplete="off" /></label>
-          <label>Heifers teat sealed?<select id="heifersSealed"><option value="">Not entered</option><option>Y</option><option>N</option></select></label>
-          <label>Previous-season BMSCC<input id="bmsccPrevious" type="number" min="0" /></label>
-          <label>Current-season BMSCC<input id="bmsccCurrent" type="number" min="0" /></label>
-          <label>Plan start of calving<input id="calvingStart" type="date" /></label>
-          <label>Expected dry-off date<input id="expectedDryOff" type="date" /></label>
+      <div class="prescription-panel" aria-labelledby="prescriptionDetailsHeading">
+        <div class="prescription-heading">
+          <div>
+            <span class="prescription-kicker">DCT prescription information</span>
+            <h3 id="prescriptionDetailsHeading">Required prescription details</h3>
+            <p>Complete these fields for the DCT prescription. Missing entries will be highlighted, but they will not stop the consultation report from generating.</p>
+          </div>
+          <span class="prescription-required-badge">Required for prescription</span>
         </div>
-      </details>
+        <div class="form-grid prescription-grid">
+          <label class="prescription-field" data-prescription-field>
+            <span>Dairy company <span class="field-required">Required</span></span>
+            <input id="dairyCompany" autocomplete="off" />
+          </label>
+          <label class="prescription-field" data-prescription-field>
+            <span>Supply number <span class="field-required">Required</span></span>
+            <input id="supplyNumber" autocomplete="off" />
+          </label>
+          <label class="prescription-field" data-prescription-field>
+            <span>LIC / MyHerd PTPT code <span class="field-required">Required</span></span>
+            <input id="ptptCode" autocomplete="off" />
+          </label>
+          <label class="prescription-field" data-prescription-field>
+            <span>Heifers teat sealed? <span class="field-required">Required</span></span>
+            <select id="heifersSealed"><option value="">Not entered</option><option>Y</option><option>N</option></select>
+          </label>
+          <label class="prescription-field" data-prescription-field>
+            <span>Previous-season BMSCC <span class="field-required">Required</span></span>
+            <input id="bmsccPrevious" type="number" min="0" />
+          </label>
+          <label class="prescription-field" data-prescription-field>
+            <span>Current-season BMSCC <span class="field-required">Required</span></span>
+            <input id="bmsccCurrent" type="number" min="0" />
+          </label>
+          <label class="prescription-field" data-prescription-field>
+            <span>Plan start of calving <span class="field-required">Required</span></span>
+            <input id="calvingStart" type="date" />
+          </label>
+          <label class="prescription-field" data-prescription-field>
+            <span>Expected dry-off date <span class="field-required">Required</span></span>
+            <input id="expectedDryOff" type="date" />
+          </label>
+        </div>
+        <div class="prescription-status" id="prescriptionStatus" aria-live="polite"></div>
+      </div>
       <p class="hint">Herd-test count is auto-detected from dated MINDA SCC columns when possible. The low/high SCC threshold is used consistently for new infection, cure and retained-infection classification.</p>
     </section>
 

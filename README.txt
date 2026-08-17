@@ -1,20 +1,17 @@
-MQR & DCT Consult — Draft 0.5.1
+MQR & DCT Consult — Draft 0.6
 
-Open index.html in Chrome or Edge.
+Changes from 0.5.1:
+- Removed the collapsible “Additional report details” section.
+- DCT prescription details are always visible and highlighted.
+- Missing prescription details do NOT block report generation.
+- Prescription fields show a live incomplete/complete status.
+- Added prescription details to the consultation facts when supplied; blanks show N/A.
+- DCT recommendation now checks ALL current-season herd tests.
+- Highest current-season SCC sets the SCC DCT band:
+    below sealant cutoff -> Teat Sealant only
+    at/above sealant cutoff but below LA cutoff -> SA DCT + Sealant
+    at/above LA cutoff -> LA DCT + Sealant
+- Dated MINDA imports may auto-detect up to 10 current-season herd tests.
+- Service-worker cache bumped to v060.
 
-What is new in 0.5
-- Report-focused layout based on the completed consultation workbook.
-- Corrected SCC dry-period classification using the same low/high threshold:
-  below -> above = New Infection
-  above -> below = Cured
-  above -> above = Retained Infection
-- Treatment rows are grouped into clinical case events by cow + treatment date.
-- Clinical case timing from calving with explicit unavailable-data counts.
-- Correct multi-quarter percentages (one clinical case = one denominator event).
-- Data coverage panel so missing farmer data is not silently treated as zero.
-- Previous DCT/ITS and Mastaplex report as N/A when not supplied.
-- Updated DCT order and individual-cow report.
-
-Important
-This is a prototype decision-support build and still requires comparison against known completed consultations before clinical use.
-CSV inputs work fully in-browser. XLS/XLSX support uses the SheetJS script referenced in index.html and therefore requires that library to be available when the page is first loaded.
+Testing: publish the folder contents to GitHub Pages and hard refresh once after upload.

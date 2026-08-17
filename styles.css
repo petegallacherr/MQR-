@@ -29,3 +29,22 @@
 @media print{.coverage-grid{grid-template-columns:repeat(4,1fr)}.summary-card{break-inside:avoid}.trigger-row td{background:#fff!important}}
 
 .generate-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.generate-status{font-size:13px;color:var(--muted);font-weight:700}.button:disabled{opacity:.65;cursor:wait}
+
+/* Draft 0.6 — DCT prescription details */
+.prescription-panel{margin-top:18px;padding:18px;border:1px solid #d7c6ae;border-radius:16px;background:#fbf7ef}
+.prescription-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:14px}
+.prescription-heading h3{margin:2px 0 5px;font-size:1.05rem;color:#3f3429}
+.prescription-heading p{margin:0;max-width:760px;color:#665b50;font-size:.92rem;line-height:1.45}
+.prescription-kicker{display:block;font-size:.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#755f48}
+.prescription-required-badge,.field-required{display:inline-flex;align-items:center;border-radius:999px;background:#f0dfbf;color:#684c22;font-weight:800;white-space:nowrap}
+.prescription-required-badge{padding:7px 10px;font-size:.72rem}
+.field-required{padding:2px 6px;font-size:.63rem;margin-left:5px;vertical-align:1px}
+.prescription-field{padding:10px;border:1px solid #dcc9a8;border-radius:12px;background:#fffaf0;transition:border-color .15s ease,background .15s ease,box-shadow .15s ease}
+.prescription-field>span:first-child{display:block;margin-bottom:7px}
+.prescription-field.prescription-missing{border-color:#d4a24e;background:#fff8e8;box-shadow:inset 3px 0 0 #d4a24e}
+.prescription-field.prescription-complete{border-color:#c9d3c3;background:#fafcf9;box-shadow:none}
+.prescription-field.prescription-complete .field-required{background:#e7eee3;color:#496343}
+.prescription-status{margin-top:12px;padding:10px 12px;border-radius:10px;background:#fff1d5;color:#6b4c1c;font-size:.86rem}
+.prescription-status.complete{background:#edf4ea;color:#3d5e38}
+@media(max-width:680px){.prescription-heading{display:block}.prescription-required-badge{margin-top:10px}}
+@media print{.prescription-panel{display:none!important}}

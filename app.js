@@ -1,7 +1,7 @@
 'use strict';
 
 const state={herd:null,mastitis:null,dct:null,mastaplex:null,result:null};
-const ids=['farmName','vetName','seasonYear','herdTests','peakCows','firstCalvers','sccTs','sccLa','dairyCompany','supplyNumber','ptptCode','heifersSealed','bmsccPrevious','bmsccCurrent','calvingStart','expectedDryOff','herdFile','mastitisFile','dctFile','mastaplexFile','herdStatus','mastitisStatus','dctStatus','mastaplexStatus','mappingPanel','generateBtn','viewReportBtn','generateStatus','demoBtn','errorBox','report','reportTitle','reportMeta','consultFacts','dataQuality','kpis','executiveSummary','monthlyTable','caseTiming','caseSummary','drugSummary','sccSummary','sccTransitions','quarterSummary','mastaplexSummary','previousDctSummary','dctSummary','dctOrder','cowTable','cowCountText','cowSearch','csvBtn','printBtn'];
+const ids=['farmName','vetName','seasonYear','herdTests','peakCows','firstCalvers','sccTs','sccLa','dairyCompany','supplyNumber','ptptCode','heifersSealed','bmsccPrevious','bmsccCurrent','calvingStart','expectedDryOff','prescriptionStatus','herdFile','mastitisFile','dctFile','mastaplexFile','herdStatus','mastitisStatus','dctStatus','mastaplexStatus','mappingPanel','generateBtn','viewReportBtn','generateStatus','demoBtn','errorBox','report','reportTitle','reportMeta','consultFacts','dataQuality','kpis','executiveSummary','monthlyTable','caseTiming','caseSummary','drugSummary','sccSummary','sccTransitions','quarterSummary','mastaplexSummary','previousDctSummary','dctSummary','dctOrder','cowTable','cowCountText','cowSearch','csvBtn','printBtn'];
 const els=Object.fromEntries(ids.map(id=>[id,document.getElementById(id)]));
 els.seasonYear.value=new Date().getFullYear()-1;
 els.sccTs.value=150;
@@ -89,7 +89,7 @@ function detectHerd(rows){
   const dated=h.map(header=>({header,date:parseSccHeaderDate(header)})).filter(x=>x.date).sort((a,b)=>b.date-a.date);
   if(dated.length){
     const seasonYear=+els.seasonYear.value||new Date().getFullYear()-1,start=new Date(seasonYear,5,1),end=new Date(seasonYear+1,5,1);
-    const current=dated.filter(x=>x.date>=start&&x.date<end).slice(0,4);const previous=dated.filter(x=>x.date<start)[0]||null;
+    const current=dated.filter(x=>x.date>=start&&x.date<end);const previous=dated.filter(x=>x.date<start)[0]||null;
     const selected=[...current,...(previous?[previous]:[])];map.scc=selected.map(x=>x.header);map.sccDates=selected.map(x=>sccDateLabel(x.date));map.sccAll=dated.map(x=>x.header);map.sccAllDates=dated.map(x=>sccDateLabel(x.date));map.currentHerdTests=current.length;map.previousHerdTest=previous?sccDateLabel(previous.date):'';
   }else{
     const explicit=['Most recent H/T','2nd','3rd','4th','5th'].map(x=>findHeader(h,[x])).filter(Boolean);const sccLike=h.filter(x=>/scc|herd.?test|h\/t/i.test(x)&&!Object.values(map).includes(x));map.scc=[...new Set([...explicit,...sccLike])].slice(0,5);map.currentHerdTests=Math.min(4,Math.max(1,map.scc.length-(map.scc.length>1?1:0)));
@@ -118,9 +118,32 @@ function setStatus(kind,rows,map,name){
   renderMappings();
 }
 function renderMappings(){const labels={herd:'Herd',mastitis:'Mastitis',dct:'DCT / ITS',mastaplex:'Mastaplex'};const items=[];for(const kind of Object.keys(labels)){const d=state[kind];if(!d)continue;const parts=Object.entries(d.map).filter(([k])=>!['sccAll'].includes(k)).map(([k,v])=>`${k}: ${Array.isArray(v)?v.join(', '):(v||'not found')}`);items.push(`<div class="mapping-row"><strong>${labels[kind]}:</strong><span>${safe(parts.join(' · '))}</span></div>`)}els.mappingPanel.innerHTML=items.join('');els.mappingPanel.classList.toggle('hidden',!items.length)}
-async function handleFile(kind,file){if(!file)return;try{const rows=await readTabular(file,kind);if(!rows.length)throw new Error('No data rows found.');const map=kind==='herd'?detectHerd(rows):kind==='mastaplex'?detectMastaplex(rows):detectTreatment(rows);state[kind]={rows,map,name:file.name};if(kind==='herd'&&map.currentHerdTests>=1&&map.currentHerdTests<=4)els.herdTests.value=String(map.currentHerdTests);setStatus(kind,rows,map,file.name)}catch(e){const el=els[`${kind}Status`];el.className='file-status bad';el.textContent=e.message}}
+async function handleFile(kind,file){if(!file)return;try{const rows=await readTabular(file,kind);if(!rows.length)throw new Error('No data rows found.');const map=kind==='herd'?detectHerd(rows):kind==='mastaplex'?detectMastaplex(rows):detectTreatment(rows);state[kind]={rows,map,name:file.name};if(kind==='herd'&&map.currentHerdTests>=1&&map.currentHerdTests<=10)els.herdTests.value=String(map.currentHerdTests);setStatus(kind,rows,map,file.name)}catch(e){const el=els[`${kind}Status`];el.className='file-status bad';el.textContent=e.message}}
 els.herdFile.addEventListener('change',e=>handleFile('herd',e.target.files[0]));els.mastitisFile.addEventListener('change',e=>handleFile('mastitis',e.target.files[0]));els.dctFile.addEventListener('change',e=>handleFile('dct',e.target.files[0]));els.mastaplexFile.addEventListener('change',e=>handleFile('mastaplex',e.target.files[0]));
-els.seasonYear.addEventListener('change',()=>{if(!state.herd)return;state.herd.map=detectHerd(state.herd.rows);if(state.herd.map.currentHerdTests>=1&&state.herd.map.currentHerdTests<=4)els.herdTests.value=String(state.herd.map.currentHerdTests);setStatus('herd',state.herd.rows,state.herd.map,state.herd.name)});
+
+els.seasonYear.addEventListener('change',()=>{if(!state.herd)return;state.herd.map=detectHerd(state.herd.rows);if(state.herd.map.currentHerdTests>=1&&state.herd.map.currentHerdTests<=10)els.herdTests.value=String(state.herd.map.currentHerdTests);setStatus('herd',state.herd.rows,state.herd.map,state.herd.name)});
+
+const prescriptionFieldIds=['dairyCompany','supplyNumber','ptptCode','heifersSealed','bmsccPrevious','bmsccCurrent','calvingStart','expectedDryOff'];
+function updatePrescriptionFields(){
+  let complete=0;
+  for(const id of prescriptionFieldIds){
+    const input=els[id],field=input?.closest('[data-prescription-field]');
+    if(!input||!field)continue;
+    const filled=clean(input.value)!=='';
+    field.classList.toggle('prescription-complete',filled);
+    field.classList.toggle('prescription-missing',!filled);
+    if(filled)complete++;
+  }
+  if(els.prescriptionStatus){
+    const missing=prescriptionFieldIds.length-complete;
+    els.prescriptionStatus.innerHTML=missing
+      ? `<strong>${missing} prescription detail${missing===1?'':'s'} still needed.</strong> You can still generate the consultation report.`
+      : '<strong>Prescription details complete.</strong>';
+    els.prescriptionStatus.classList.toggle('complete',missing===0);
+  }
+}
+for(const id of prescriptionFieldIds){els[id]?.addEventListener('input',updatePrescriptionFields);els[id]?.addEventListener('change',updatePrescriptionFields)}
+updatePrescriptionFields();
 
 const DCT_DRUGS=['quadrant dc','duramast dc 500','duramast dc 600','cepravin dry cow','cefa-safe','dryclox dc','ceprotect dc','juraclox','orbenin dry','noroclox dc 600'];
 const SEALANTS=['dryzen','duraseal','dryseal','teatseal','sureseal'];
@@ -143,9 +166,13 @@ function dctAdvice(scc,preg,treatments,herdTests,ts,la){
   if(scc[0]==null||scc[0]===0)return'Absent from H/T (Culled/Carryover)';
   if(treatments.some(x=>x.category==='Mastitis - Clinical'))return'Mastitis - Clinical';
   if(treatments.some(x=>x.category==='Mastitis - Subclinical'))return'Mastitis - Subclinical';
-  const relevant=scc.slice(0,Math.max(1,Math.min(4,herdTests)));
-  if(relevant.every(v=>v==null||v<ts))return'Teat Sealant only';
-  if(relevant.some(v=>v!=null&&v>la))return'LA DCT/Sealant Combo';
+  // Assess every available current-season herd test. One high result anywhere
+  // in the season is enough to move the cow into the appropriate DCT band.
+  const relevant=scc.slice(0,Math.max(1,herdTests)).filter(v=>v!=null&&v!==0);
+  const highest=relevant.length?Math.max(...relevant):null;
+  if(highest==null)return'Absent from H/T (Culled/Carryover)';
+  if(highest<ts)return'Teat Sealant only';
+  if(highest>=la)return'LA DCT/Sealant Combo';
   return'SA DCT/Sealant Combo';
 }
 function dryPeriodStatus(scc,herdTests,threshold){
@@ -210,7 +237,7 @@ function renderMonthly(rows){
 function renderResult(r){
   state.result=r;els.report.classList.remove('hidden');els.errorBox.classList.add('hidden');const farm=clean(els.farmName.value)||'Unnamed farm',vet=clean(els.vetName.value)||'Veterinarian not entered';els.reportTitle.textContent=farm;els.reportMeta.textContent=`${vet} · Season ${els.seasonYear.value}/${String(+els.seasonYear.value+1).slice(-2)} · Generated ${new Date().toLocaleDateString('en-NZ')}`;
   const herdDates=state.herd?.map?.sccDates||[],currentDates=herdDates.slice(0,+els.herdTests.value),previousDate=state.herd?.map?.previousHerdTest||herdDates[+els.herdTests.value]||'';const enteredStart=parseDate(els.calvingStart.value),expectedDry=parseDate(els.expectedDryOff.value);
-  const facts=[['Veterinarian',vet],['Dairy company',clean(els.dairyCompany.value)||'N/A'],['Supply number',clean(els.supplyNumber.value)||'N/A'],['LIC / MyHerd',clean(els.ptptCode.value)||'N/A'],['Current herd tests',currentDates.length?currentDates.join(', '):els.herdTests.value],['Pre-dry comparison',previousDate||'N/A'],['Peak cows',fmt(r.peak)],['First calvers',fmt(r.firstCalvers)],['SCC cut-offs',`${r.threshold} / ${r.laThreshold}`],['Plan start of calving',isoDate(enteredStart||r.calvingStart)||'N/A'],['Expected mid-calving',isoDate(r.midCalving)||'N/A'],['Expected dry-off',isoDate(expectedDry)||'N/A']];els.consultFacts.innerHTML=facts.map(([a,b])=>`<div class="fact"><b>${safe(a)}</b><span>${safe(b)}</span></div>`).join('');
+  const facts=[['Veterinarian',vet],['Dairy company',clean(els.dairyCompany.value)||'N/A'],['Supply number',clean(els.supplyNumber.value)||'N/A'],['LIC / MyHerd',clean(els.ptptCode.value)||'N/A'],['Heifers teat sealed?',clean(els.heifersSealed.value)||'N/A'],['Previous-season BMSCC',clean(els.bmsccPrevious.value)||'N/A'],['Current-season BMSCC',clean(els.bmsccCurrent.value)||'N/A'],['Current herd tests',currentDates.length?currentDates.join(', '):els.herdTests.value],['Pre-dry comparison',previousDate||'N/A'],['Peak cows',fmt(r.peak)],['First calvers',fmt(r.firstCalvers)],['SCC cut-offs',`${r.threshold} / ${r.laThreshold}`],['Plan start of calving',isoDate(enteredStart||r.calvingStart)||'N/A'],['Expected mid-calving',isoDate(r.midCalving)||'N/A'],['Expected dry-off',isoDate(expectedDry)||'N/A']];els.consultFacts.innerHTML=facts.map(([a,b])=>`<div class="fact"><b>${safe(a)}</b><span>${safe(b)}</span></div>`).join('');
 
   els.dataQuality.innerHTML=[
     coverageBox('Pregnancy status',r.coverage.preg,r.cows.length,'Used for DCT/carryover classification'),
@@ -265,7 +292,7 @@ els.printBtn.addEventListener('click',()=>window.print());
 els.csvBtn.addEventListener('click',()=>{if(!state.result)return;const rows=[['Tag','Latest SCC','Pre-dry SCC','Pregnancy Diagnosis','Expected Calving Date','BCS','DCT Advice','Dry Off Advice','Dry-period SCC Status','Data Note','Mastaplex']];for(const c of state.result.cows)rows.push([c.id,c.scc[0]??'',c.dryPeriod.pre??'',c.preg,isoDate(c.expectedCalving),c.bcs??'',c.dct,c.advice,c.dryPeriod.status,c.dataNote,c.mastaplex.join('; ')]);const csv=rows.map(r=>r.map(x=>`"${String(x??'').replace(/"/g,'""')}"`).join(',')).join('\r\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=`${(clean(els.farmName.value)||'farm').replace(/[^a-z0-9]+/gi,'-')}-dct-recommendations.csv`;a.click();URL.revokeObjectURL(a.href)});
 
 function demoData(){
-  els.farmName.value='Demo Dairy';els.vetName.value='Dr Example';els.seasonYear.value=2025;els.peakCows.value=20;els.firstCalvers.value=5;els.sccTs.value=150;els.sccLa.value=250;els.herdTests.value=4;
+  els.farmName.value='Demo Dairy';els.vetName.value='Dr Example';els.seasonYear.value=2025;els.peakCows.value=20;els.firstCalvers.value=5;els.sccTs.value=150;els.sccLa.value=250;els.herdTests.value=4;els.dairyCompany.value='Demo Dairy Co';els.supplyNumber.value='12345';els.ptptCode.value='ABCD';els.heifersSealed.value='Y';els.bmsccPrevious.value=145;els.bmsccCurrent.value=128;els.calvingStart.value='2025-07-01';els.expectedDryOff.value='2026-05-20';updatePrescriptionFields();
   const herd=Array.from({length:20},(_,i)=>({'Tag':String(101+i),'Animal-Year Born':i<5?2023:2021,'Calving date':new Date(2025,6,(i%20)+1),'BCS':[4.2,4.5,4.7,5,5.2][i%5],'Most recent H/T':[82,116,188,275,520,73,146,205,340,110,620,95,155,230,410,90,180,260,780,130][i],'2nd':[95,120,170,260,480,80,160,190,315,135,590,120,140,250,390,100,160,240,650,145][i],'3rd':[110,130,160,240,450,88,180,175,290,150,550,140,130,270,360,120,145,220,580,160][i],'4th':[120,140,175,220,430,95,190,165,280,160,510,145,120,260,330,125,140,210,560,170][i],'5th':[130,155,140,200,400,110,150,155,250,170,470,160,110,240,300,140,130,190,520,180][i],'Pregnancy Diagnosis':i===18?'Empty':'Pregnant','Expected Calving date':new Date(2026,6,(i%20)+1)}));
   const mastitis=[{'Cow Number':'103','Condition':'Mastitis - Clinical','Treatment Date':new Date(2025,7,12),'Quarter':'LF','Product':'Intracillin 1000 Milking Cow','Days':3},{'Cow Number':'103','Condition':'Mastitis - Clinical','Treatment Date':new Date(2025,7,12),'Quarter':'','Product':'Metacam 20mg/Ml For Injection','Days':1},{'Cow Number':'103','Condition':'Mastitis - Clinical','Treatment Date':new Date(2025,9,4),'Quarter':'LF','Product':'Intracillin 1000 Milking Cow','Days':3},{'Cow Number':'107','Condition':'Mastitis - Clinical','Treatment Date':new Date(2025,8,7),'Quarter':'RR','Product':'Intracillin 1000 Milking Cow','Days':5},{'Cow Number':'111','Condition':'Mastitis - Subclinical','Treatment Date':new Date(2025,10,10),'Quarter':'RF','Product':'Albiotic','Days':3},{'Cow Number':'111','Condition':'Mastitis - Subclinical','Treatment Date':new Date(2025,10,10),'Quarter':'','Product':'Metacam 20mg/Ml For Injection','Days':1}];
   const dct=[{'Cow Number':'101','Treatment Date':new Date(2025,4,20),'Product':'Dryzen'},{'Cow Number':'101','Treatment Date':new Date(2025,4,20),'Product':'Duramast DC 500'},{'Cow Number':'102','Treatment Date':new Date(2025,4,20),'Product':'Dryzen'},{'Cow Number':'102','Treatment Date':new Date(2025,4,20),'Product':'Quadrant DC'}];const mp=[{'Cow Number':'103','Species':'Staph. aureus','Quarter':'LF'},{'Cow Number':'107','Species':'Strep. uberis','Quarter':'RR'},{'Cow Number':'111','Species':'CNS','Quarter':'RF'}];
