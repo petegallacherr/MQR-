@@ -94,3 +94,7 @@
 .mastaplex-other{margin-top:14px}
 @media(max-width:900px){.mastaplex-group-grid{grid-template-columns:1fr}}
 @media print{.mastaplex-group-grid{grid-template-columns:1fr 1fr}.mastaplex-group{break-inside:avoid}}
+
+
+/* v0.7.3 — Mastaplex full-width layout */
+.mastaplex-card{width:100%}
