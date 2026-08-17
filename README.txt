@@ -1,4 +1,11 @@
-MQR & DCT Consult — Draft 0.7.1
+MQR & DCT Consult — Draft 0.7.2
+
+v0.7.2 changes:
+- Mastaplex cultured-growth summary is split into Gram-positive and Gram-negative organism groups.
+- No-growth, mixed/contaminated and unclassified Mastaplex results are kept separate rather than forced into a Gram category.
+- Original organism/result names and counts remain visible within each group.
+- Gram percentages use classified bacterial growths as the denominator.
+- All v0.7.1 report ordering, selective DCT outcome calculations, SCC logic and DCT recommendation logic are unchanged.
 
 v0.7.1 changes:
 - Reordered the report immediately after the monthly mastitis summary.
@@ -17,4 +24,4 @@ Selective DCT outcome definitions:
 - The comparison is observational and is not labelled as proof that previous treatment caused or prevented mastitis.
 
 Deploy:
-Publish the folder contents to GitHub Pages and hard refresh once after upload so the v071 service-worker cache replaces the prior version.
+Publish the folder contents to GitHub Pages and hard refresh once after upload so the v072 service-worker cache replaces the prior version.

@@ -169,6 +169,15 @@ function treatmentRecords(data,mode){
 }
 function indexByCow(records){const m=new Map();for(const r of records){if(!m.has(r.id))m.set(r.id,[]);m.get(r.id).push(r)}return m}
 function indexMastaplex(data){const byCow=new Map(),m=data?.map||{};for(const r of data?.rows||[]){const id=clean(r[m.tag]),species=clean(r[m.species]);if(!id||!species)continue;if(!byCow.has(id))byCow.set(id,[]);byCow.get(id).push(species)}return byCow}
+function mastaplexGroup(result){
+  const s=clean(result).toLowerCase().replace(/[._-]+/g,' ').replace(/\s+/g,' ').trim();
+  if(!s)return'Other / unclassified';
+  if(/no (bacterial )?growth|no growth|negative culture|nothing isolated/.test(s))return'No bacterial growth';
+  if(/mixed|contamin/.test(s))return'Mixed / contaminated';
+  if(/gram\s*negative|gram\s*-ve|e\.?\s*coli|escherichia|klebsiella|serratia|enterobacter|pseudomonas|proteus|citrobacter/.test(s))return'Gram negative';
+  if(/gram\s*positive|gram\s*\+ve|staph|staphyl|coagulase|\bcns\b|\bnas\b|strep|strept|enterococcus|aerococcus|corynebacter|bacillus|trueperella|arcanobacter/.test(s))return'Gram positive';
+  return'Other / unclassified';
+}
 
 function dctAdvice(scc,preg,treatments,herdTests,ts,la){
   if(/empty/i.test(preg))return'Empty';
@@ -253,10 +262,10 @@ function buildResult(){
   const currentSeasonMastitisCows=new Set(caseAnalysis.cases.map(c=>c.id));
   const prevComboMastitis=[...prevComboCurrent].filter(id=>currentSeasonMastitisCows.has(id)).length;
   const prevSealantOnlyMastitis=[...prevSealantOnlyCurrent].filter(id=>currentSeasonMastitisCows.has(id)).length;
-  const species={};for(const arr of mastaIndex.values())for(const s of arr)species[s]=(species[s]||0)+1;
+  const species={},mastaplexGroups={'Gram positive':{},'Gram negative':{},'No bacterial growth':{},'Mixed / contaminated':{},'Other / unclassified':{}};for(const arr of mastaIndex.values())for(const s of arr){species[s]=(species[s]||0)+1;const g=mastaplexGroup(s);mastaplexGroups[g][s]=(mastaplexGroups[g][s]||0)+1;}
   const expectedDates=cows.map(c=>c.expectedCalving).filter(Boolean),calvingStart=expectedDates.length?new Date(Math.min(...expectedDates.map(d=>d.getTime()))):null,midCalving=median(expectedDates);
   const coverage={preg:cows.filter(c=>c.preg).length,bcs:cows.filter(c=>c.bcs!=null).length,expected:cows.filter(c=>c.expectedCalving).length,latestScc:recent.length,transition:transitionAvailable,caseCalving:caseAnalysis.timing.matched,caseTotal:caseAnalysis.cases.length,mastitisRecognised:allMastitisRecords.length,mastitisInSeason:mastitisRecords.length,mastitisOutOfSeason,mastitisUndated,dctLoaded:!!state.dct,mastaplexLoaded:!!state.mastaplex};
-  return{cows,peak,firstCalvers,recent,sccBuckets,dctCounts,clinical,subclinical,sealantOnly,sa,laBase,laOrder,sealantCows,sealantTubes,pregnant,pregnantSa,pregnantLa,pregnantSealant,emptyHeifers,caseAnalysis,transitionCounts,transitionAvailable,dctRecords,prevProducts,prevCowDct,prevCowSeal,prevComboCurrent,prevSealantOnlyCurrent,prevComboMastitis,prevSealantOnlyMastitis,species,calvingStart,midCalving,coverage,seasonWindow,threshold:ts,laThreshold:la};
+  return{cows,peak,firstCalvers,recent,sccBuckets,dctCounts,clinical,subclinical,sealantOnly,sa,laBase,laOrder,sealantCows,sealantTubes,pregnant,pregnantSa,pregnantLa,pregnantSealant,emptyHeifers,caseAnalysis,transitionCounts,transitionAvailable,dctRecords,prevProducts,prevCowDct,prevCowSeal,prevComboCurrent,prevSealantOnlyCurrent,prevComboMastitis,prevSealantOnlyMastitis,species,mastaplexGroups,calvingStart,midCalving,coverage,seasonWindow,threshold:ts,laThreshold:la};
 }
 
 function metricsHtml(items){return`<div class="metric-list">${items.map(([a,b,c])=>`<div class="metric-row"><span>${safe(a)}${c?`<small>${safe(c)}</small>`:''}</span><span>${safe(b)}</span></div>`).join('')}</div>`}
@@ -349,7 +358,21 @@ function renderResult(r){
       els.previousDctSummary.innerHTML=`<div class="previous-dct-layout"><div><h4>Previous dry-off products</h4>${barsHtml(pp,Math.max(1,r.dctRecords.length))}${metricsHtml([['Cows with DCT',fmt(r.prevCowDct.size)],['Cows with sealant',fmt(r.prevCowSeal.size)]])}</div><div class="order-box selective-dct-box"><h4>Current-season mastitis by previous treatment</h4>${metricsHtml([['Previous DCT + sealant combo cows',fmt(comboDen),'Matched to current herd'],['DCT combo → mastitis this season',comboOutcome,'≥1 current-season case'],['Previous sealant-only cows',fmt(sealDen),'Matched to current herd'],['Sealant only → mastitis this season',sealOutcome,'≥1 current-season case']])}<p class="context-note">${safe(selectiveNote)}</p></div></div>`;
     }else els.previousDctSummary.innerHTML='<p class="na-copy">Previous DCT / ITS file loaded, but no recognised DCT or sealant products were detected.</p>';
   }else els.previousDctSummary.innerHTML='<p class="na-copy">N/A — previous DCT / ITS data not supplied.</p>';
-  const sp=Object.entries(r.species).sort((a,b)=>b[1]-a[1]);els.mastaplexSummary.innerHTML=state.mastaplex?(sp.length?barsHtml(sp,sp.reduce((a,x)=>a+x[1],0)):'<p class="na-copy">Mastaplex file loaded, but no cultured-growth results were detected.</p>'):'<p class="na-copy">N/A — Mastaplex data not supplied.</p>';
+  const sp=Object.entries(r.species).sort((a,b)=>b[1]-a[1]);
+  if(state.mastaplex){
+    if(sp.length){
+      const gp=Object.entries(r.mastaplexGroups['Gram positive']||{}).sort((a,b)=>b[1]-a[1]);
+      const gn=Object.entries(r.mastaplexGroups['Gram negative']||{}).sort((a,b)=>b[1]-a[1]);
+      const ng=Object.entries(r.mastaplexGroups['No bacterial growth']||{}).sort((a,b)=>b[1]-a[1]);
+      const mix=Object.entries(r.mastaplexGroups['Mixed / contaminated']||{}).sort((a,b)=>b[1]-a[1]);
+      const other=Object.entries(r.mastaplexGroups['Other / unclassified']||{}).sort((a,b)=>b[1]-a[1]);
+      const gpN=gp.reduce((a,x)=>a+x[1],0),gnN=gn.reduce((a,x)=>a+x[1],0),bacterialN=gpN+gnN,total=sp.reduce((a,x)=>a+x[1],0);
+      const groupMetrics=metricsHtml([['Gram-positive growths',fmt(gpN),bacterialN?pct(gpN,bacterialN)+' of classified bacterial growths':'No classified bacterial growths'],['Gram-negative growths',fmt(gnN),bacterialN?pct(gnN,bacterialN)+' of classified bacterial growths':'No classified bacterial growths']]);
+      const groupBlock=(title,items,cls)=>`<section class="mastaplex-group ${cls}"><h4>${safe(title)}</h4>${items.length?barsHtml(items,Math.max(1,total)):'<p class="na-copy">None detected.</p>'}</section>`;
+      const otherItems=[...ng,...mix,...other].sort((a,b)=>b[1]-a[1]);
+      els.mastaplexSummary.innerHTML=`<div class="mastaplex-overview">${groupMetrics}</div><div class="mastaplex-group-grid">${groupBlock('Gram-positive organisms',gp,'gram-positive')}${groupBlock('Gram-negative organisms',gn,'gram-negative')}</div>${otherItems.length?`<div class="mastaplex-other">${groupBlock('Other Mastaplex results',otherItems,'other-results')}</div>`:''}<p class="context-note">Gram percentages compare classified bacterial growths only. No-growth, mixed/contaminated and unclassified results are shown separately.</p>`;
+    }else els.mastaplexSummary.innerHTML='<p class="na-copy">Mastaplex file loaded, but no cultured-growth results were detected.</p>';
+  }else els.mastaplexSummary.innerHTML='<p class="na-copy">N/A — Mastaplex data not supplied.</p>';
 
   const order=[['Teat Sealant only',r.sealantOnly],['SA DCT/Sealant Combo',r.sa],['LA DCT/Sealant Combo',r.laBase],['Mastitis - Clinical',r.clinical],['Mastitis - Subclinical',r.subclinical],['Empty',r.dctCounts.Empty||0],['Absent from H/T',r.dctCounts['Absent from H/T (Culled/Carryover)']||0]];els.dctSummary.innerHTML=barsHtml(order,r.cows.length);
   els.dctOrder.innerHTML=`<div class="order-box"><h4>Order estimate</h4>${metricsHtml([['SA DCT combo cows',fmt(r.sa)],['LA DCT combo cows',fmt(r.laOrder),'Includes clinical/subclinical cows'],['Sealant-only cows',fmt(r.sealantOnly)],['Total sealant cows',fmt(r.sealantCows)],['Total sealant tubes',fmt(r.sealantTubes)],['Pregnant cows',fmt(r.pregnant)],['Pregnant SA combo',fmt(r.pregnantSa)],['Pregnant LA combo',fmt(r.pregnantLa)],['Pregnant sealant only',fmt(r.pregnantSealant)],['Empty heifers / carryover candidates',fmt(r.emptyHeifers)],['Pregnancy-data coverage',`${fmt(r.coverage.preg)} / ${fmt(r.cows.length)}`,r.coverage.preg<r.cows.length?'Order provisional where pregnancy is missing':'Complete']])}</div>`;
