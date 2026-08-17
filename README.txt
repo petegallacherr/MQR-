@@ -1,26 +1,20 @@
-MQR & DCT Consult — Draft 0.7
+MQR & DCT Consult — Draft 0.7.1
 
-v0.7 changes:
-- Added the farmer-facing Clinical mastitis — monthly & seasonal trend graph based on the Koroa end-of-season Excel report.
-- Graph runs June to May and shows:
-    Heifer % (heifer cases / first calvers)
-    MA cows % (mature-age cases / [peak cows - first calvers])
-    Monthly % (all clinical case events / peak cows)
-    Monthly SmartSAMM-style trigger line
-    Cumulative Season % on a second Y-axis
-- Retains the spreadsheet trigger pattern: Jun 1.0%, Jul 2.5%, Aug 4.0%, Sep 2.5%, Oct-May 1.0%; season reference 14%.
-- Hover/tap/focus on a month shows the underlying figures.
-- Graph is inline SVG so it remains sharp in Print / Save PDF and does not require an online chart library.
-- Existing monthly detail table remains directly below the graph.
-- SCC cure/new/retained logic and DCT recommendation logic are unchanged from 0.6.4.
-- Service-worker cache bumped to v070.
+v0.7.1 changes:
+- Reordered the report immediately after the monthly mastitis summary.
+- Mastitis treatments used is now first, with Quarter distribution beside it.
+- Previous DCT / ITS treatment now sits directly underneath as a full-width selective-DCT review section.
+- Added current-season mastitis outcome calculations for cows previously treated with DCT + sealant combo versus sealant only.
+- Comparison denominators include only previous-treatment cows matched to the current herd file, so cows no longer in the herd do not artificially lower the mastitis rate.
+- If there are no previous sealant-only cows, the selective comparison is shown as not available rather than zero.
+- Existing SCC transition logic, current-season DCT recommendation logic, mastitis event grouping and v0.7 graph calculations are unchanged.
+- Service-worker cache bumped to v071.
 
-Carried forward from 0.6.4:
-- DCT recommendation checks ALL current-season herd tests.
-- Highest current-season SCC sets the SCC DCT band.
-- Dated MINDA imports may auto-detect up to 10 current-season herd tests.
-- Prescription details remain visible and do not block report generation when incomplete.
-- Planned start of calving auto-fills to 1 August of the year after the season start year and remains editable.
+Selective DCT outcome definitions:
+- Previous DCT + sealant combo = a cow with at least one recognised DCT product and at least one recognised teat-sealant product in the previous DCT / ITS file.
+- Previous sealant only = a cow with a recognised teat-sealant product and no recognised DCT product in the previous DCT / ITS file.
+- Mastitis this season = the cow has at least one current-season mastitis case event using the same event logic as the report.
+- The comparison is observational and is not labelled as proof that previous treatment caused or prevented mastitis.
 
-Testing / deployment:
-Publish the folder contents to GitHub Pages and hard refresh once after upload so the v070 service-worker cache replaces the prior version.
+Deploy:
+Publish the folder contents to GitHub Pages and hard refresh once after upload so the v071 service-worker cache replaces the prior version.

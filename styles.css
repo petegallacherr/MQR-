@@ -70,3 +70,13 @@
 .monthly-detail-title{margin:17px 0 0;color:#5c4b3a;font-size:14px}
 @media(max-width:720px){.mastitis-chart-shell{padding:10px 8px}.mastitis-chart{min-width:820px}.mastitis-chart-tooltip{justify-content:flex-start}.mastitis-chart-legend{justify-content:flex-start}}
 @media print{.mastitis-trend-card{break-inside:avoid}.mastitis-chart-shell{padding:8px;border-color:#d8d1ca}.mastitis-chart-scroll{overflow:visible}.mastitis-chart{min-width:0;width:100%}.mastitis-chart-tooltip{display:none}.mastitis-chart-legend{margin-top:3px}.monthly-detail-title{margin-top:10px}}
+
+/* v0.7.1 — post-monthly-summary report order and selective DCT outcome review */
+.post-mastitis-primary{margin-top:18px}
+.previous-dct-card{border-left:5px solid var(--tan)}
+.previous-dct-layout{display:grid;grid-template-columns:1.15fr .85fr;gap:22px;align-items:start;margin-top:14px}
+.previous-dct-layout h4{margin:0 0 10px;color:var(--brown);font-size:14px}
+.selective-dct-box{height:100%}
+.post-mastitis-secondary{margin-top:18px}
+@media(max-width:900px){.previous-dct-layout{grid-template-columns:1fr}}
+@media print{.previous-dct-card{break-inside:avoid}.previous-dct-layout{grid-template-columns:1.15fr .85fr}}

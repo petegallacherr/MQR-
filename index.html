@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#5c4b3a" />
-  <title>MQR & DCT Consult — Draft 0.7</title>
+  <title>MQR & DCT Consult — Draft 0.7.1</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="stylesheet" href="styles.css" />
 </head>
@@ -15,7 +15,7 @@
       <h1>MQR & DCT Consult</h1>
       <p class="subtitle">Milk quality review, treatment analysis and dry cow consultation from farm data exports.</p>
     </div>
-    <span class="pill">Draft 0.7</span>
+    <span class="pill">Draft 0.7.1</span>
   </header>
 
   <main class="page-shell">
@@ -205,7 +205,29 @@
         </div>
       </article>
 
-      <div class="report-grid">
+      <div class="report-grid post-mastitis-primary">
+        <article class="report-card">
+          <h3>Mastitis treatments used</h3>
+          <div id="drugSummary"></div>
+        </article>
+        <article class="report-card">
+          <h3>Quarter distribution</h3>
+          <div id="quarterSummary"></div>
+        </article>
+      </div>
+
+      <article class="report-card full-width previous-dct-card">
+        <div class="card-title-row">
+          <div>
+            <h3>Previous DCT / ITS treatment</h3>
+            <p>Previous dry-off treatment use and current-season mastitis outcomes for cows matched to the current herd.</p>
+          </div>
+          <span class="mini-note">Selective DCT review</span>
+        </div>
+        <div id="previousDctSummary"></div>
+      </article>
+
+      <div class="report-grid post-mastitis-secondary">
         <article class="report-card">
           <h3>Case timing from calving</h3>
           <div id="caseTiming"></div>
@@ -215,24 +237,12 @@
           <div id="caseSummary"></div>
         </article>
         <article class="report-card">
-          <h3>Mastitis treatments used</h3>
-          <div id="drugSummary"></div>
-        </article>
-        <article class="report-card">
-          <h3>Quarter distribution</h3>
-          <div id="quarterSummary"></div>
-        </article>
-        <article class="report-card">
           <h3>SCC profile — latest herd test</h3>
           <div id="sccSummary"></div>
         </article>
         <article class="report-card">
           <h3>Dry-period SCC outcome</h3>
           <div id="sccTransitions"></div>
-        </article>
-        <article class="report-card">
-          <h3>Previous DCT / ITS</h3>
-          <div id="previousDctSummary"></div>
         </article>
         <article class="report-card">
           <h3>Mastaplex cultured growths</h3>
