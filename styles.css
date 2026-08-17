@@ -30,7 +30,7 @@
 
 .generate-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.generate-status{font-size:13px;color:var(--muted);font-weight:700}.button:disabled{opacity:.65;cursor:wait}
 
-/* Draft 0.6 — DCT prescription details */
+/* Draft 0.6.1 — DCT prescription details */
 .prescription-panel{margin-top:18px;padding:18px;border:1px solid #d7c6ae;border-radius:16px;background:#fbf7ef}
 .prescription-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:14px}
 .prescription-heading h3{margin:2px 0 5px;font-size:1.05rem;color:#3f3429}
