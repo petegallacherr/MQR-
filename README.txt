@@ -1,4 +1,11 @@
-MQR & DCT Consult — Draft 0.7.3
+MQR & DCT Consult — Draft 0.7.4
+
+v0.7.4 changes:
+- Individual cow recommendations CSV export is now clearly labelled and available beside the Individual cow recommendations table as well as in the report header.
+- Export includes cow tag, latest SCC, pre-dry SCC, pregnancy diagnosis, expected calving date, BCS, individual DCT recommendation, dry-off advice, dry-period SCC status, data note and Mastaplex result.
+- CSV filename now ends in -individual-cow-recommendations.csv and includes a UTF-8 BOM for cleaner opening in Excel.
+- No SCC, mastitis, DCT, selective-treatment or Mastaplex calculations were changed.
+- Service-worker cache bumped to v074.
 
 v0.7.3 changes:
 - Styling: Mastaplex cultured growths now spans the full report width.

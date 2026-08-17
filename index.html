@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#5c4b3a" />
-  <title>MQR & DCT Consult — Draft 0.7.3</title>
+  <title>MQR & DCT Consult — Draft 0.7.4</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="stylesheet" href="styles.css" />
 </head>
@@ -15,7 +15,7 @@
       <h1>MQR & DCT Consult</h1>
       <p class="subtitle">Milk quality review, treatment analysis and dry cow consultation from farm data exports.</p>
     </div>
-    <span class="pill">Draft 0.7.3</span>
+    <span class="pill">Draft 0.7.4</span>
   </header>
 
   <main class="page-shell">
@@ -155,7 +155,7 @@
           <p id="reportMeta"></p>
         </div>
         <div class="report-actions">
-          <button id="csvBtn" class="button ghost" type="button">Export cow CSV</button>
+          <button id="csvBtn" class="button ghost" type="button">Export recommendations CSV</button>
           <button id="printBtn" class="button ghost" type="button">Print / Save PDF</button>
         </div>
       </div>
@@ -263,7 +263,7 @@
       <article class="report-card full-width">
         <div class="table-head">
           <div><h3>Individual cow recommendations</h3><p id="cowCountText"></p></div>
-          <input id="cowSearch" class="search" placeholder="Search cow / advice / status…" />
+          <div class="table-head-actions"><input id="cowSearch" class="search" placeholder="Search cow / advice / status…" /><button id="cowCsvBtn" class="button ghost" type="button">Export recommendations CSV</button></div>
         </div>
         <div class="table-wrap">
           <table id="cowTable">

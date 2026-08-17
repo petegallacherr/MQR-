@@ -1,7 +1,7 @@
 'use strict';
 
 const state={herd:null,mastitis:null,dct:null,mastaplex:null,result:null};
-const ids=['farmName','vetName','seasonYear','herdTests','peakCows','firstCalvers','sccTs','sccLa','dairyCompany','supplyNumber','ptptCode','heifersSealed','bmsccPrevious','bmsccCurrent','calvingStart','expectedDryOff','prescriptionStatus','herdFile','mastitisFile','dctFile','mastaplexFile','herdStatus','mastitisStatus','dctStatus','mastaplexStatus','mappingPanel','generateBtn','viewReportBtn','generateStatus','demoBtn','errorBox','report','reportTitle','reportMeta','consultFacts','dataQuality','kpis','executiveSummary','mastitisChart','mastitisChartTooltip','monthlyTable','caseTiming','caseSummary','drugSummary','sccSummary','sccTransitions','quarterSummary','mastaplexSummary','previousDctSummary','dctSummary','dctOrder','cowTable','cowCountText','cowSearch','csvBtn','printBtn'];
+const ids=['farmName','vetName','seasonYear','herdTests','peakCows','firstCalvers','sccTs','sccLa','dairyCompany','supplyNumber','ptptCode','heifersSealed','bmsccPrevious','bmsccCurrent','calvingStart','expectedDryOff','prescriptionStatus','herdFile','mastitisFile','dctFile','mastaplexFile','herdStatus','mastitisStatus','dctStatus','mastaplexStatus','mappingPanel','generateBtn','viewReportBtn','generateStatus','demoBtn','errorBox','report','reportTitle','reportMeta','consultFacts','dataQuality','kpis','executiveSummary','mastitisChart','mastitisChartTooltip','monthlyTable','caseTiming','caseSummary','drugSummary','sccSummary','sccTransitions','quarterSummary','mastaplexSummary','previousDctSummary','dctSummary','dctOrder','cowTable','cowCountText','cowSearch','cowCsvBtn','csvBtn','printBtn'];
 const els=Object.fromEntries(ids.map(id=>[id,document.getElementById(id)]));
 els.seasonYear.value=new Date().getFullYear()-1;
 function defaultCalvingStartFromSeason(){
@@ -391,7 +391,18 @@ els.generateBtn.addEventListener('click',()=>{
 });
 els.viewReportBtn.addEventListener('click',()=>els.report.scrollIntoView({behavior:'smooth',block:'start'}));
 els.printBtn.addEventListener('click',()=>window.print());
-els.csvBtn.addEventListener('click',()=>{if(!state.result)return;const rows=[['Tag','Latest SCC','Pre-dry SCC','Pregnancy Diagnosis','Expected Calving Date','BCS','DCT Advice','Dry Off Advice','Dry-period SCC Status','Data Note','Mastaplex']];for(const c of state.result.cows)rows.push([c.id,c.scc[0]??'',c.dryPeriod.pre??'',c.preg,isoDate(c.expectedCalving),c.bcs??'',c.dct,c.advice,c.dryPeriod.status,c.dataNote,c.mastaplex.join('; ')]);const csv=rows.map(r=>r.map(x=>`"${String(x??'').replace(/"/g,'""')}"`).join(',')).join('\r\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=`${(clean(els.farmName.value)||'farm').replace(/[^a-z0-9]+/gi,'-')}-dct-recommendations.csv`;a.click();URL.revokeObjectURL(a.href)});
+function exportCowRecommendations(){
+  if(!state.result)return;
+  const rows=[['Cow Tag','Latest SCC','Pre-dry SCC','Pregnancy Diagnosis','Expected Calving Date','BCS','Individual DCT Recommendation','Dry-off Advice','Dry-period SCC Status','Data Note','Mastaplex Result']];
+  for(const c of state.result.cows)rows.push([c.id,c.scc[0]??'',c.dryPeriod.pre??'',c.preg,isoDate(c.expectedCalving),c.bcs??'',c.dct,c.advice,c.dryPeriod.status,c.dataNote,c.mastaplex.join('; ')]);
+  const csv='\uFEFF'+rows.map(r=>r.map(x=>`"${String(x??'').replace(/"/g,'""')}"`).join(',')).join('\r\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download=`${(clean(els.farmName.value)||'farm').replace(/[^a-z0-9]+/gi,'-')}-individual-cow-recommendations.csv`;
+  document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(a.href);
+}
+els.csvBtn.addEventListener('click',exportCowRecommendations);
+els.cowCsvBtn.addEventListener('click',exportCowRecommendations);
 
 function demoData(){
   els.farmName.value='Demo Dairy';els.vetName.value='Dr Example';els.seasonYear.value=2025;els.peakCows.value=20;els.firstCalvers.value=5;els.sccTs.value=150;els.sccLa.value=250;els.herdTests.value=4;els.dairyCompany.value='Fonterra Co-operative Group';els.supplyNumber.value='12345';els.ptptCode.value='ABCD';els.heifersSealed.value='Y';els.bmsccPrevious.value=145;els.bmsccCurrent.value=128;els.calvingStart.value='2026-08-01';els.expectedDryOff.value='2026-05-20';updatePrescriptionFields();
