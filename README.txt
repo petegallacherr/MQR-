@@ -1,4 +1,4 @@
-MQR & DCT Consult — Draft 0.6.2
+MQR & DCT Consult — Draft 0.6.4
 
 Changes from 0.5.1:
 - Removed the collapsible “Additional report details” section.
@@ -15,3 +15,8 @@ Changes from 0.5.1:
 - Service-worker cache bumped to v060.
 
 Testing: publish the folder contents to GitHub Pages and hard refresh once after upload.
+
+Draft 0.6.4 fixes:
+- Rebased on the complete 0.6.2 form so no prescription details are lost.
+- Dairy company dropdown retained; Dairy Goat Co-operative removed for cattle-only use.
+- Planned start of calving auto-fills to 1 August of the year after the season start year and remains editable.
