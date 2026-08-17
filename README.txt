@@ -1,4 +1,4 @@
-MQR & DCT Consult — Draft 0.6.3
+MQR & DCT Consult — Draft 0.6.2
 
 Changes from 0.5.1:
 - Removed the collapsible “Additional report details” section.
