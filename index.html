@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#5c4b3a" />
-  <title>MQR & DCT Consult — Draft 0.6.2</title>
+  <title>MQR & DCT Consult — Draft 0.6.3</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="stylesheet" href="styles.css" />
 </head>
@@ -15,7 +15,7 @@
       <h1>MQR & DCT Consult</h1>
       <p class="subtitle">Milk quality review, treatment analysis and dry cow consultation from farm data exports.</p>
     </div>
-    <span class="pill">Draft 0.6.2</span>
+    <span class="pill">Draft 0.6.3</span>
   </header>
 
   <main class="page-shell">
@@ -50,22 +50,7 @@
         <div class="form-grid prescription-grid">
           <label class="prescription-field" data-prescription-field>
             <span>Dairy company <span class="field-required">Required</span></span>
-            <select id="dairyCompany">
-              <option value="">Select dairy company</option>
-              <option>Fonterra Co-operative Group</option>
-              <option>Open Country Dairy</option>
-              <option>Synlait Milk</option>
-              <option>Westland Milk Products</option>
-              <option>Tatua Co-operative Dairy Company</option>
-              <option>Oceania Dairy</option>
-              <option>Goodman Fielder New Zealand</option>
-              <option>Danone Nutricia New Zealand</option>
-              <option>OFI New Zealand</option>
-              <option>The a2 Milk Company</option>
-              <option>Miraka (Open Country Dairy)</option>
-              <option>Mataura Valley Milk (Open Country Dairy)</option>
-              <option>Other / not listed</option>
-            </select>
+            <input id="dairyCompany" autocomplete="off" />
           </label>
           <label class="prescription-field" data-prescription-field>
             <span>Supply number <span class="field-required">Required</span></span>
@@ -77,7 +62,7 @@
           </label>
           <label class="prescription-field" data-prescription-field>
             <span>Heifers teat sealed? <span class="field-required">Required</span></span>
-            <select id="heifersSealed"><option value="">Not entered</option><option>Yes</option><option>No</option></select>
+            <select id="heifersSealed"><option value="">Not entered</option><option>Y</option><option>N</option></select>
           </label>
           <label class="prescription-field" data-prescription-field>
             <span>Previous-season BMSCC <span class="field-required">Required</span></span>
