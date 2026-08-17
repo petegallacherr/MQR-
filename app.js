@@ -1,7 +1,7 @@
 'use strict';
 
 const state={herd:null,mastitis:null,dct:null,mastaplex:null,result:null};
-const ids=['farmName','vetName','seasonYear','herdTests','peakCows','firstCalvers','sccTs','sccLa','dairyCompany','supplyNumber','ptptCode','heifersSealed','bmsccPrevious','bmsccCurrent','calvingStart','expectedDryOff','prescriptionStatus','herdFile','mastitisFile','dctFile','mastaplexFile','herdStatus','mastitisStatus','dctStatus','mastaplexStatus','mappingPanel','generateBtn','viewReportBtn','generateStatus','demoBtn','errorBox','report','reportTitle','reportMeta','consultFacts','dataQuality','kpis','executiveSummary','monthlyTable','caseTiming','caseSummary','drugSummary','sccSummary','sccTransitions','quarterSummary','mastaplexSummary','previousDctSummary','dctSummary','dctOrder','cowTable','cowCountText','cowSearch','csvBtn','printBtn'];
+const ids=['farmName','vetName','seasonYear','herdTests','peakCows','firstCalvers','sccTs','sccLa','dairyCompany','supplyNumber','ptptCode','heifersSealed','bmsccPrevious','bmsccCurrent','calvingStart','expectedDryOff','prescriptionStatus','herdFile','mastitisFile','dctFile','mastaplexFile','herdStatus','mastitisStatus','dctStatus','mastaplexStatus','mappingPanel','generateBtn','viewReportBtn','generateStatus','demoBtn','errorBox','report','reportTitle','reportMeta','consultFacts','dataQuality','kpis','executiveSummary','mastitisChart','mastitisChartTooltip','monthlyTable','caseTiming','caseSummary','drugSummary','sccSummary','sccTransitions','quarterSummary','mastaplexSummary','previousDctSummary','dctSummary','dctOrder','cowTable','cowCountText','cowSearch','csvBtn','printBtn'];
 const els=Object.fromEntries(ids.map(id=>[id,document.getElementById(id)]));
 els.seasonYear.value=new Date().getFullYear()-1;
 function defaultCalvingStartFromSeason(){
@@ -217,7 +217,8 @@ function buildCaseAnalysis(records,herdById,seasonYear,peak,firstCalvers){
   const timing={d0_7:0,d8_30:0,over30:0,pre:0,unavailable:0,matched:0};
   for(const c of cases){const cow=herdById.get(c.id);if(!cow||!cow.calving||!c.date){timing.unavailable++;continue}const days=daysBetween(c.date,cow.calving);if(days==null){timing.unavailable++;continue}if(days < -30){timing.unavailable++;continue}timing.matched++;if(days<0)timing.pre++;else if(days<=7)timing.d0_7++;else if(days<=30)timing.d8_30++;else timing.over30++}
   const months=[5,6,7,8,9,10,11,0,1,2,3,4],names=['June','July','August','September','October','November','December','January','February','March','April','May'],triggers=[.01,.025,.04,.025,.01,.01,.01,.01,.01,.01,.01,.01];let cumulative=0;
-  const monthly=months.map((m,i)=>{const cs=cases.filter(c=>c.date&&c.date.getMonth()===m);const nr=nsaidRows.filter(r=>r.date&&r.date.getMonth()===m);const heifer=cs.filter(c=>herdById.get(c.id)?.yearBorn===seasonYear-2).length;const mature=cs.filter(c=>herdById.has(c.id)&&herdById.get(c.id)?.yearBorn!==seasonYear-2).length;const rate=peak?cs.length/peak:null;if(rate!=null)cumulative+=rate;return{name:names[i],cases:cs.length,nsaid:nr.length,heifer,mature,rate,trigger:triggers[i],seasonPct:rate==null?null:cumulative,overTrigger:rate!=null&&rate>triggers[i]}});
+  const matureCows=peak!=null&&firstCalvers!=null?Math.max(0,peak-firstCalvers):null;
+  const monthly=months.map((m,i)=>{const cs=cases.filter(c=>c.date&&c.date.getMonth()===m);const nr=nsaidRows.filter(r=>r.date&&r.date.getMonth()===m);const heifer=cs.filter(c=>herdById.get(c.id)?.yearBorn===seasonYear-2).length;const mature=cs.filter(c=>herdById.has(c.id)&&herdById.get(c.id)?.yearBorn!==seasonYear-2).length;const rate=peak?cs.length/peak:null;const heiferRate=firstCalvers?heifer/firstCalvers:null;const matureRate=matureCows?mature/matureCows:null;if(rate!=null)cumulative+=rate;return{name:names[i],cases:cs.length,nsaid:nr.length,heifer,mature,rate,heiferRate,matureRate,trigger:triggers[i],seasonPct:rate==null?null:cumulative,overTrigger:rate!=null&&rate>triggers[i]}});
   const unmatchedCowCases=cases.filter(c=>!herdById.has(c.id)).length;
   return{mastitisRows,antibioticRows,nsaidRows,cases,uniqueCows:byCow.size,repeatCows:repeatCowIds.length,repeatCowIds,repeatQuarterCows:repeatQuarterCowIds.length,repeatQuarterCowIds,combo,extended,txChanges,productCounts,quarters,timing,monthly,unmatchedCowCases};
 }
@@ -245,8 +246,42 @@ function metricsHtml(items){return`<div class="metric-list">${items.map(([a,b,c]
 function barsHtml(items,total){return items.map(([name,n])=>`<div class="bar-row"><div class="bar-label"><span>${safe(name)}</span><strong>${fmt(n)}${total?` · ${pct(n,total)}`:''}</strong></div><div class="bar-track"><div class="bar-fill" style="width:${total?Math.min(100,n/total*100):0}%"></div></div></div>`).join('')}
 function statusBadge(text,tone='neutral'){return`<span class="status-badge ${tone}">${safe(text)}</span>`}
 function coverageBox(label,have,total,note=''){const available=total?have/total:null,tone=available==null?'neutral':available>=.95?'good':available>=.7?'warn':'bad';const value=total?`${fmt(have)} / ${fmt(total)} · ${pct(have,total)}`:safe(have);return`<div class="coverage-item ${tone}"><b>${safe(label)}</b><strong>${value}</strong>${note?`<span>${safe(note)}</span>`:''}</div>`}
+function ratioPct(v,d=1){return v==null?'N/A':`${(v*100).toFixed(d)}%`}
+function mastitisAxisLabel(v){const n=v*100;return `${n.toFixed(Math.abs(n-Math.round(n))<1e-8?0:1)}%`}
+function renderMastitisChart(rows){
+  if(!els.mastitisChart)return;
+  if(!rows?.length){els.mastitisChart.innerHTML='<p class="na-copy">N/A — no monthly mastitis data.</p>';return}
+  const W=1180,H=500,L=72,R=80,T=30,B=72,plotW=W-L-R,plotH=H-T-B;
+  const allMonthly=rows.flatMap(x=>[x.heiferRate,x.matureRate,x.rate,x.trigger]).filter(v=>v!=null&&Number.isFinite(v));
+  const seasonValues=rows.map(x=>x.seasonPct).filter(v=>v!=null&&Number.isFinite(v));
+  const monthlyMax=Math.max(.04,...allMonthly),leftMax=Math.max(.05,Math.ceil(monthlyMax*1.08/.01)*.01);
+  const seasonMax=Math.max(.14,...seasonValues),rightMax=Math.max(.14,Math.ceil(seasonMax*1.05/.02)*.02);
+  const leftStep=leftMax<=.08?.01:leftMax<=.16?.02:.05,rightStep=rightMax<=.20?.02:.05;
+  const yLeft=v=>T+plotH-(Math.max(0,v)/leftMax)*plotH;
+  const yRight=v=>T+plotH-(Math.max(0,v)/rightMax)*plotH;
+  const groupW=plotW/rows.length,barW=Math.min(17,groupW*.19),gap=4;
+  const esc=safe;
+  let svg=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" aria-labelledby="mastitisChartTitle mastitisChartDesc"><title id="mastitisChartTitle">Clinical mastitis monthly and seasonal trend</title><desc id="mastitisChartDesc">Grouped monthly bars show heifer, mature-age cow and whole-herd clinical mastitis rates. The red line is the monthly trigger and the orange line is cumulative season percentage.</desc>`;
+  for(let v=0;v<=leftMax+1e-9;v+=leftStep){const y=yLeft(v);svg+=`<line class="chart-grid" x1="${L}" y1="${y}" x2="${W-R}" y2="${y}"/><text class="chart-axis-label left" x="${L-10}" y="${y+4}">${mastitisAxisLabel(v)}</text>`}
+  for(let v=0;v<=rightMax+1e-9;v+=rightStep){const y=yRight(v);svg+=`<text class="chart-axis-label right" x="${W-R+10}" y="${y+4}">${mastitisAxisLabel(v)}</text>`}
+  svg+=`<line class="chart-axis" x1="${L}" y1="${T}" x2="${L}" y2="${T+plotH}"/><line class="chart-axis" x1="${W-R}" y1="${T}" x2="${W-R}" y2="${T+plotH}"/><line class="chart-axis" x1="${L}" y1="${T+plotH}" x2="${W-R}" y2="${T+plotH}"/><text class="chart-axis-title" x="20" y="${T+plotH/2}" transform="rotate(-90 20 ${T+plotH/2})">Cases per month (%)</text><text class="chart-axis-title" x="${W-18}" y="${T+plotH/2}" transform="rotate(90 ${W-18} ${T+plotH/2})">Accumulated season %</text>`;
+  const triggerPts=[],seasonPts=[];
+  rows.forEach((x,i)=>{
+    const cx=L+groupW*(i+.5),baseY=T+plotH,barStart=cx-(barW*1.5+gap);
+    const vals=[['heifer',x.heiferRate],['mature',x.matureRate],['monthly',x.rate]];
+    vals.forEach(([cls,v],j)=>{if(v==null)return;const y=yLeft(v),h=Math.max(0,baseY-y);svg+=`<rect class="mastitis-bar ${cls}" x="${barStart+j*(barW+gap)}" y="${y}" width="${barW}" height="${h}" rx="1"/>`});
+    triggerPts.push(`${cx},${yLeft(x.trigger)}`);if(x.seasonPct!=null)seasonPts.push(`${cx},${yRight(x.seasonPct)}`);
+    svg+=`<text class="chart-month" x="${cx}" y="${baseY+25}" text-anchor="middle">${esc(x.name.slice(0,3))}</text><rect class="mastitis-hit" data-index="${i}" tabindex="0" x="${L+groupW*i}" y="${T}" width="${groupW}" height="${plotH+38}" fill="transparent"><title>${esc(x.name)} — Heifer ${ratioPct(x.heiferRate)}, MA cows ${ratioPct(x.matureRate)}, Monthly ${ratioPct(x.rate)}, Trigger ${ratioPct(x.trigger)}, Season ${ratioPct(x.seasonPct)}</title></rect>`;
+  });
+  svg+=`<polyline class="mastitis-line trigger-line" points="${triggerPts.join(' ')}"/><polyline class="mastitis-line season-line" points="${seasonPts.join(' ')}"/>`;
+  seasonPts.forEach(pt=>{const [x,y]=pt.split(',');svg+=`<circle class="season-point" cx="${x}" cy="${y}" r="3.5"/>`});
+  svg+='</svg>';els.mastitisChart.innerHTML=svg;
+  const showMonth=i=>{const x=rows[i];if(!x||!els.mastitisChartTooltip)return;els.mastitisChartTooltip.innerHTML=`<strong>${esc(x.name)}</strong><span>Cases: ${fmt(x.cases)}</span><span>Heifer: ${ratioPct(x.heiferRate)}</span><span>MA cows: ${ratioPct(x.matureRate)}</span><span>Whole herd: ${ratioPct(x.rate)}</span><span>Trigger: ${ratioPct(x.trigger)}</span><span>Season to date: ${ratioPct(x.seasonPct)}</span>`};
+  els.mastitisChart.querySelectorAll('.mastitis-hit').forEach(hit=>{const i=Number(hit.dataset.index);hit.addEventListener('mouseenter',()=>showMonth(i));hit.addEventListener('focus',()=>showMonth(i));hit.addEventListener('click',()=>showMonth(i))});
+}
 function renderMonthly(rows){
   els.monthlyTable.querySelector('tbody').innerHTML=rows.map(x=>`<tr class="${x.overTrigger?'trigger-row':''}"><td>${x.name}</td><td>${fmt(x.cases)}</td><td>${fmt(x.nsaid)}</td><td>${fmt(x.heifer)}</td><td>${fmt(x.mature)}</td><td>${pct(x.rate,1)}</td><td>${pct(x.trigger,1)}</td><td>${pct(x.seasonPct,1)}</td></tr>`).join('')+`<tr class="total-row"><td>Total</td><td>${fmt(rows.reduce((a,x)=>a+x.cases,0))}</td><td>${fmt(rows.reduce((a,x)=>a+x.nsaid,0))}</td><td>${fmt(rows.reduce((a,x)=>a+x.heifer,0))}</td><td>${fmt(rows.reduce((a,x)=>a+x.mature,0))}</td><td>${pct(rows.reduce((a,x)=>a+x.cases,0),state.result?.peak)}</td><td>14.0%</td><td>${pct(rows.length?rows[rows.length-1].seasonPct:null,1)}</td></tr>`;
+  renderMastitisChart(rows);
 }
 function renderResult(r){
   state.result=r;els.report.classList.remove('hidden');els.errorBox.classList.add('hidden');const farm=clean(els.farmName.value)||'Unnamed farm',vet=clean(els.vetName.value)||'Veterinarian not entered';els.reportTitle.textContent=farm;els.reportMeta.textContent=`${vet} · Season ${els.seasonYear.value}/${String(+els.seasonYear.value+1).slice(-2)} · Generated ${new Date().toLocaleDateString('en-NZ')}`;

@@ -48,3 +48,25 @@
 .prescription-status.complete{background:#edf4ea;color:#3d5e38}
 @media(max-width:680px){.prescription-heading{display:block}.prescription-required-badge{margin-top:10px}}
 @media print{.prescription-panel{display:none!important}}
+
+
+/* v0.7 — farmer-facing monthly mastitis trend */
+.mastitis-chart-shell{margin-top:16px;border:1px solid var(--line);border-radius:12px;background:#fff;padding:14px 14px 10px}
+.mastitis-chart-scroll{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
+.mastitis-chart{min-width:860px;width:100%}
+.mastitis-chart svg{display:block;width:100%;height:auto;font-family:inherit}
+.chart-grid{stroke:#e9e4de;stroke-width:1}
+.chart-axis{stroke:#81766b;stroke-width:1.2}
+.chart-axis-label{fill:#6d645c;font-size:12px}.chart-axis-label.left{text-anchor:end}.chart-axis-label.right{text-anchor:start}
+.chart-axis-title{fill:#5c4b3a;font-size:13px;font-weight:800;text-anchor:middle}
+.chart-month{fill:#5c4b3a;font-size:12px;font-weight:750}
+.mastitis-bar{stroke:#26323a;stroke-width:.75}.mastitis-bar.heifer{fill:#9dc3e6}.mastitis-bar.mature{fill:#00b0f0}.mastitis-bar.monthly{fill:#002060}
+.mastitis-line{fill:none;stroke-linejoin:round;stroke-linecap:round;pointer-events:none}.trigger-line{stroke:#ff0000;stroke-width:3}.season-line{stroke:#ed7d31;stroke-width:4}.season-point{fill:#ed7d31;stroke:#fff;stroke-width:1.2;pointer-events:none}
+.mastitis-hit{cursor:pointer;outline:none}.mastitis-hit:focus{stroke:#5c4b3a;stroke-width:2;stroke-dasharray:5 4}
+.mastitis-chart-legend{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin:9px 0 3px;color:#4f4740;font-size:12px;font-weight:750}
+.mastitis-chart-legend span{display:inline-flex;align-items:center;gap:6px}.legend-swatch{width:14px;height:10px;border:1px solid #26323a;display:inline-block}.legend-swatch.heifer{background:#9dc3e6}.legend-swatch.mature{background:#00b0f0}.legend-swatch.monthly{background:#002060}.legend-line{width:20px;height:0;border-top:3px solid;display:inline-block}.legend-line.trigger{border-color:#ff0000}.legend-line.season{border-color:#ed7d31;border-top-width:4px}
+.mastitis-chart-tooltip{margin:9px auto 2px;max-width:880px;min-height:36px;border-radius:9px;background:#f8f5f1;padding:8px 11px;color:#5c4b3a;font-size:12px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:center}.mastitis-chart-tooltip strong{font-size:13px}.mastitis-chart-tooltip span{white-space:nowrap}
+.mastitis-chart-note{margin:8px 4px 2px;text-align:center;color:var(--muted);font-size:11px;line-height:1.4}
+.monthly-detail-title{margin:17px 0 0;color:#5c4b3a;font-size:14px}
+@media(max-width:720px){.mastitis-chart-shell{padding:10px 8px}.mastitis-chart{min-width:820px}.mastitis-chart-tooltip{justify-content:flex-start}.mastitis-chart-legend{justify-content:flex-start}}
+@media print{.mastitis-trend-card{break-inside:avoid}.mastitis-chart-shell{padding:8px;border-color:#d8d1ca}.mastitis-chart-scroll{overflow:visible}.mastitis-chart{min-width:0;width:100%}.mastitis-chart-tooltip{display:none}.mastitis-chart-legend{margin-top:3px}.monthly-detail-title{margin-top:10px}}

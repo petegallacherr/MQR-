@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#5c4b3a" />
-  <title>MQR & DCT Consult — Draft 0.6.4</title>
+  <title>MQR & DCT Consult — Draft 0.7</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="stylesheet" href="styles.css" />
 </head>
@@ -15,7 +15,7 @@
       <h1>MQR & DCT Consult</h1>
       <p class="subtitle">Milk quality review, treatment analysis and dry cow consultation from farm data exports.</p>
     </div>
-    <span class="pill">Draft 0.6.4</span>
+    <span class="pill">Draft 0.7</span>
   </header>
 
   <main class="page-shell">
@@ -177,11 +177,26 @@
         <div id="executiveSummary" class="summary-list"></div>
       </article>
 
-      <article class="report-card full-width">
+      <article class="report-card full-width mastitis-trend-card">
         <div class="card-title-row">
-          <div><h3>Clinical cases per month</h3><p>Case events are grouped by cow + treatment date. NSAID activity is shown separately.</p></div>
+          <div><h3>Clinical mastitis — monthly &amp; seasonal trend</h3><p>Monthly case rates are shown for heifers, mature-age cows and the whole herd, with the spreadsheet trigger and cumulative season rate.</p></div>
           <span class="mini-note">Season reference: 14%</span>
         </div>
+        <div class="mastitis-chart-shell">
+          <div class="mastitis-chart-scroll">
+            <div id="mastitisChart" class="mastitis-chart" role="img" aria-label="Monthly clinical mastitis chart"></div>
+          </div>
+          <div class="mastitis-chart-legend" aria-label="Chart legend">
+            <span><i class="legend-swatch heifer"></i>Heifer %</span>
+            <span><i class="legend-swatch mature"></i>MA cows %</span>
+            <span><i class="legend-swatch monthly"></i>Monthly %</span>
+            <span><i class="legend-line trigger"></i>Trigger</span>
+            <span><i class="legend-line season"></i>Season %</span>
+          </div>
+          <div id="mastitisChartTooltip" class="mastitis-chart-tooltip" aria-live="polite">Hover or tap a month to see the figures.</div>
+          <p class="mastitis-chart-note">Heifer % = heifer cases ÷ first calvers · MA cows % = MA cases ÷ (peak cows − first calvers) · Monthly % = all clinical cases ÷ peak cows.</p>
+        </div>
+        <h4 class="monthly-detail-title">Monthly detail</h4>
         <div class="table-wrap no-max">
           <table class="compact-table" id="monthlyTable">
             <thead><tr><th>Month</th><th>Cases</th><th>NSAID rows</th><th>Heifer cases</th><th>MA cases</th><th>Monthly %</th><th>Trigger</th><th>Cumulative %</th></tr></thead>
