@@ -401,8 +401,10 @@ function exportCowRecommendations(){
   a.download=`${(clean(els.farmName.value)||'farm').replace(/[^a-z0-9]+/gi,'-')}-individual-cow-recommendations.csv`;
   document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(a.href);
 }
+// The report-header button owns the export action.
+// The lower button calls this control directly from its inline click so it also works
+// during the first load after a PWA update when an older cached app.js may still be active.
 els.csvBtn.addEventListener('click',exportCowRecommendations);
-els.cowCsvBtn.addEventListener('click',exportCowRecommendations);
 
 function demoData(){
   els.farmName.value='Demo Dairy';els.vetName.value='Dr Example';els.seasonYear.value=2025;els.peakCows.value=20;els.firstCalvers.value=5;els.sccTs.value=150;els.sccLa.value=250;els.herdTests.value=4;els.dairyCompany.value='Fonterra Co-operative Group';els.supplyNumber.value='12345';els.ptptCode.value='ABCD';els.heifersSealed.value='Y';els.bmsccPrevious.value=145;els.bmsccCurrent.value=128;els.calvingStart.value='2026-08-01';els.expectedDryOff.value='2026-05-20';updatePrescriptionFields();
