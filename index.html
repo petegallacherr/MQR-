@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#5c4b3a" />
-  <title>MQR & DCT Consult — Draft 0.7.13</title>
+  <title>MQR & DCT Consult — Draft 0.7.15</title>
   <link rel="manifest" href="manifest.webmanifest" />
-  <link rel="stylesheet" href="styles.css?v=0713" />
+  <link rel="stylesheet" href="styles.css?v=0715" />
 </head>
 <body>
   <header class="topbar">
@@ -15,7 +15,7 @@
       <h1>MQR & DCT Consult</h1>
       <p class="subtitle">Milk quality review, treatment analysis and dry cow consultation from farm data exports.</p>
     </div>
-    <span class="pill">Draft 0.7.13</span>
+    <span class="pill">Draft 0.7.15</span>
   </header>
 
   <main class="page-shell">
@@ -129,7 +129,7 @@
         <article class="upload-card">
           <div class="upload-number">D</div>
           <h3>Mastaplex <span class="optional">Optional</span></h3>
-          <p>Mastaplex CSV/export for this client and season. If omitted, culture metrics are reported as unavailable.</p>
+          <p>Mastaplex CSV/export for this client. The report automatically includes only results dated within the selected 1 June–31 May season, so multi-season exports are safe to upload. Undated results are excluded.</p>
           <label class="file-button">Choose file<input id="mastaplexFile" type="file" accept=".csv,.xlsx,.xls" /></label>
           <div id="mastaplexStatus" class="file-status neutral">No file loaded</div>
         </article>
@@ -287,6 +287,6 @@
     </section>
   </main>
 
-  <script src="app.js?v=0713"></script>
+  <script src="app.js?v=0715"></script>
 </body>
 </html>

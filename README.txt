@@ -1,12 +1,19 @@
-MQR & DCT Consult — Draft 0.7.13
+MQR & DCT Consult — Draft 0.7.15
+
+0.7.15
+- Mastaplex results are now restricted to the selected dairy season (1 June to 31 May).
+- Mastaplex rows outside the selected season and rows without a usable date are excluded from summary counts, cow-level results and CSV output.
+- Data coverage now reports included, out-of-season and undated Mastaplex rows.
+- Service-worker cache bumped to v0715.
 
 
-v0.7.13 changes:
-- Consultation summary DCT line now reports tube counts rather than cow counts.
-- SA and LA combination recommendations count as 8 tubes per cow; sealant-only recommendations count as 4 tubes per cow.
-- Summary shows SA combo tubes, LA combo tubes, sealant-only tubes, and the combined total.
+v0.7.15 changes:
+- Simplified the Consultation summary DCT stock estimate into three separate tube counts.
+- SA DCT tubes = SA combination cows × 4 DCT tubes.
+- LA DCT tubes = LA combination/order cows × 4 DCT tubes, including clinical/subclinical cows assigned to the LA order.
+- All teat sealant tubes = every sealant-treated cow × 4 tubes (sealant-only + SA combo + LA combo/order cows).
 - Detailed DCT order-estimate section remains unchanged.
-- Service-worker cache bumped to v0713.
+- Service-worker cache bumped to v0715.
 
 v0.7.12 changes:
 - Consultation summary now lists the actual months that exceeded the monthly SMARTSAMM trigger instead of only returning the number of months.
