@@ -1,4 +1,10 @@
-MQR & DCT Consult — Draft 0.7.11
+MQR & DCT Consult — Draft 0.7.12
+
+
+v0.7.12 changes:
+- Consultation summary now lists the actual months that exceeded the monthly SMARTSAMM trigger instead of only returning the number of months.
+- Replaced “SmartSAMM-style” wording with “SMARTSAMM”.
+- Service-worker cache bumped to v0712.
 
 
 
