@@ -1,5 +1,12 @@
-MQR & DCT Consult — Draft 0.7.12
+MQR & DCT Consult — Draft 0.7.13
 
+
+v0.7.13 changes:
+- Consultation summary DCT line now reports tube counts rather than cow counts.
+- SA and LA combination recommendations count as 8 tubes per cow; sealant-only recommendations count as 4 tubes per cow.
+- Summary shows SA combo tubes, LA combo tubes, sealant-only tubes, and the combined total.
+- Detailed DCT order-estimate section remains unchanged.
+- Service-worker cache bumped to v0713.
 
 v0.7.12 changes:
 - Consultation summary now lists the actual months that exceeded the monthly SMARTSAMM trigger instead of only returning the number of months.
