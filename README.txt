@@ -1,8 +1,8 @@
-MQR & DCT Consult — Draft 0.7.9
+MQR & DCT Consult — Draft 0.7.10
 
 
 
-v0.7.9 changes:
+v0.7.10 changes:
 - Standardised report rows so counts remain the main right-hand value and percentages sit underneath the metric heading, matching the Case timing from calving presentation.
 - Applied the same hierarchy to bar summaries including mastitis products, quarter distribution, SCC profile, SCC transitions, previous DCT / ITS products and Mastaplex organism breakdowns.
 - SCC profile bands updated to 0–149, 150–500, Over 500 and Over 1,000. Over 1,000 is shown as a subset of Over 500.
