@@ -1,5 +1,17 @@
-MQR & DCT Consult — Draft 0.7.5
+MQR & DCT Consult — Draft 0.7.7
 
+
+v0.7.7 changes:
+- Added an on-screen legend above Individual cow recommendations explaining Data completeness terms and the dry-off timing method.
+- Dry-off advice still uses the established BCS-adjusted calculation when BCS + expected calving are both available.
+- If BCS is missing but expected calving is available, dry-off advice now falls back to a standard 50-day dry period.
+- Renamed the on-screen Data note column to Data completeness.
+- Updated data-coverage wording to reflect the dry-off fallback.
+
+v0.7.6 changes:
+- Report-header Export CSV button now uses the Vetlife tan treatment and Print / Save PDF uses the dark brown treatment for stronger visual separation.
+- Individual cow recommendations are excluded from Print / Save PDF; they remain available on-screen and through the dedicated CSV export.
+- Data note remains a cow-level completeness flag. It reports missing pregnancy, BCS, expected calving date, or partial current-season SCC data. Zero SCC values are now treated consistently as missing for the partial-SCC flag.
 v0.7.5 changes:
 - Individual cow recommendations CSV export is now clearly labelled and available beside the Individual cow recommendations table as well as in the report header.
 - Export includes cow tag, latest SCC, pre-dry SCC, pregnancy diagnosis, expected calving date, BCS, individual DCT recommendation, dry-off advice, dry-period SCC status, data note and Mastaplex result.

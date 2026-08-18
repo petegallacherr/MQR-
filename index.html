@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#5c4b3a" />
-  <title>MQR & DCT Consult — Draft 0.7.5</title>
+  <title>MQR & DCT Consult — Draft 0.7.7</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="stylesheet" href="styles.css" />
 </head>
@@ -15,7 +15,7 @@
       <h1>MQR & DCT Consult</h1>
       <p class="subtitle">Milk quality review, treatment analysis and dry cow consultation from farm data exports.</p>
     </div>
-    <span class="pill">Draft 0.7.5</span>
+    <span class="pill">Draft 0.7.7</span>
   </header>
 
   <main class="page-shell">
@@ -155,8 +155,8 @@
           <p id="reportMeta"></p>
         </div>
         <div class="report-actions">
-          <button id="csvBtn" class="button ghost" type="button">Export recommendations CSV</button>
-          <button id="printBtn" class="button ghost" type="button">Print / Save PDF</button>
+          <button id="csvBtn" class="button report-export" type="button">Export recommendations CSV</button>
+          <button id="printBtn" class="button report-pdf" type="button">Print / Save PDF</button>
         </div>
       </div>
 
@@ -260,14 +260,24 @@
         </div>
       </article>
 
-      <article class="report-card full-width">
+      <article id="cowRecommendationsSection" class="report-card full-width">
         <div class="table-head">
           <div><h3>Individual cow recommendations</h3><p id="cowCountText"></p></div>
           <div class="table-head-actions"><input id="cowSearch" class="search" placeholder="Search cow / advice / status…" /><button id="cowCsvBtn" class="button ghost" type="button" onclick="document.getElementById('csvBtn').click()">Export recommendations CSV</button></div>
         </div>
+        <div class="recommendation-guide" aria-label="Individual cow recommendation guide">
+          <div>
+            <h4>Data completeness legend</h4>
+            <p><b>Pregnancy</b> = pregnancy diagnosis missing. <b>BCS</b> = body condition score missing. <b>Expected calving</b> = expected calving date missing. <b>Partial SCC</b> = one or more expected current-season herd-test SCC results are missing or recorded as 0.</p>
+          </div>
+          <div>
+            <h4>How dry-off advice is calculated</h4>
+            <p><b>BCS + expected calving date:</b> uses the BCS-adjusted timing calculation. <b>Expected calving date only:</b> if BCS is missing, uses a 50-day dry period before the expected calving date. <b>No expected calving date:</b> dry-off timing is unavailable.</p>
+          </div>
+        </div>
         <div class="table-wrap">
           <table id="cowTable">
-            <thead><tr><th>Tag</th><th>Latest SCC</th><th>Pre-dry SCC</th><th>Pregnancy</th><th>DCT advice</th><th>Dry-off advice</th><th>Dry-period SCC</th><th>Data note</th><th>Mastaplex</th></tr></thead>
+            <thead><tr><th>Tag</th><th>Latest SCC</th><th>Pre-dry SCC</th><th>Pregnancy</th><th>DCT advice</th><th>Dry-off advice</th><th>Dry-period SCC</th><th>Data completeness</th><th>Mastaplex</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>

@@ -204,12 +204,21 @@ function dryPeriodStatus(scc,herdTests,threshold){
   return{status:'Low SCC',pre,post,note:''};
 }
 function dryOffTiming(cow,seasonYear){
-  if(/empty/i.test(cow.preg))return{advice:'Cull/Carryover',targetDate:null};
-  if(!cow.expectedCalving)return{advice:'N/A — expected calving date missing',targetDate:null};
-  if(cow.bcs==null)return{advice:'N/A — BCS missing',targetDate:null};
-  const target=cow.yearBorn===seasonYear-2?5.5:5;const gap=target-cow.bcs-.3;const days=gap/.5*30+50;const d=new Date(cow.expectedCalving);d.setDate(d.getDate()-Math.round(days));const adjustedMonth=d.getDate()>15?d.getMonth()+1:d.getMonth();let advice='';
+  if(/empty/i.test(cow.preg))return{advice:'Cull/Carryover',targetDate:null,timingBasis:'empty'};
+  if(!cow.expectedCalving)return{advice:'N/A — expected calving date missing',targetDate:null,timingBasis:'unavailable'};
+
+  // When BCS is available, retain the established BCS-adjusted timing calculation.
+  // When BCS is unavailable, fall back to a standard 50-day dry period from the
+  // cow's expected calving date so a useful dry-off recommendation can still be made.
+  const target=cow.yearBorn===seasonYear-2?5.5:5;
+  const hasBcs=cow.bcs!=null;
+  const days=hasBcs ? (target-cow.bcs-.3)/.5*30+50 : 50;
+  const d=new Date(cow.expectedCalving);
+  d.setDate(d.getDate()-Math.round(days));
+  const adjustedMonth=d.getDate()>15?d.getMonth()+1:d.getMonth();
+  let advice='';
   if(adjustedMonth===3)advice='1st April Dry Off';else if(adjustedMonth===4)advice='1st May Dry Off';else if(adjustedMonth>=5)advice='Dry Off End of Season';else advice='Dry Off NOW';
-  return{advice,targetDate:d,targetBCS:target,days};
+  return{advice,targetDate:d,targetBCS:hasBcs?target:null,days,timingBasis:hasBcs?'BCS + expected calving':'Expected calving date only'};
 }
 
 function buildCaseAnalysis(records,herdById,seasonYear,peak,firstCalvers){
@@ -240,7 +249,7 @@ function buildResult(){
   const mastitisOutOfSeason=allMastitisRecords.filter(r=>r.date&&!inDairySeason(r.date,seasonYear)).length;
   const mastitisRecords=allMastitisRecords.filter(r=>inDairySeason(r.date,seasonYear));
   const mastitisByCow=indexByCow(mastitisRecords),dctRecords=treatmentRecords(state.dct,'dct'),mastaIndex=indexMastaplex(state.mastaplex);const cows=[];
-  for(const r of state.herd.rows){const id=clean(r[hm.tag]);if(!id)continue;const scc=(hm.scc||[]).map(h=>num(r[h]));const cow={id,yearBorn:Math.trunc(num(r[hm.yearBorn])??0),calving:parseDate(r[hm.calving]),bcs:num(r[hm.bcs]),preg:clean(r[hm.preg]),expectedCalving:parseDate(r[hm.expectedCalving]),scc,treatments:mastitisByCow.get(id)||[],mastaplex:mastaIndex.get(id)||[]};cow.dct=dctAdvice(scc,cow.preg,cow.treatments,herdTests,ts,la);cow.dryPeriod=dryPeriodStatus(scc,herdTests,ts);Object.assign(cow,dryOffTiming(cow,seasonYear));const missing=[];if(!cow.preg)missing.push('pregnancy');if(cow.bcs==null)missing.push('BCS');if(!cow.expectedCalving)missing.push('expected calving');if(cow.scc.slice(0,herdTests).some(v=>v==null))missing.push('partial SCC');cow.dataNote=missing.join(', ');cows.push(cow)}
+  for(const r of state.herd.rows){const id=clean(r[hm.tag]);if(!id)continue;const scc=(hm.scc||[]).map(h=>num(r[h]));const cow={id,yearBorn:Math.trunc(num(r[hm.yearBorn])??0),calving:parseDate(r[hm.calving]),bcs:num(r[hm.bcs]),preg:clean(r[hm.preg]),expectedCalving:parseDate(r[hm.expectedCalving]),scc,treatments:mastitisByCow.get(id)||[],mastaplex:mastaIndex.get(id)||[]};cow.dct=dctAdvice(scc,cow.preg,cow.treatments,herdTests,ts,la);cow.dryPeriod=dryPeriodStatus(scc,herdTests,ts);Object.assign(cow,dryOffTiming(cow,seasonYear));const missing=[];if(!cow.preg)missing.push('pregnancy');if(cow.bcs==null)missing.push('BCS');if(!cow.expectedCalving)missing.push('expected calving');if(cow.scc.slice(0,herdTests).some(v=>v==null||v===0))missing.push('partial SCC');cow.dataNote=missing.join(', ');cows.push(cow)}
   const herdById=new Map(cows.map(c=>[c.id,c])),peak=num(els.peakCows.value)||cows.length,firstCalvers=num(els.firstCalvers.value)||cows.filter(c=>c.yearBorn===seasonYear-2).length,recent=cows.map(c=>c.scc[0]).filter(x=>x!=null&&x>0),sccBuckets={le100:0,b101_200:0,b201_499:0,ge500:0,over1000:0};for(const x of recent){if(x<=100)sccBuckets.le100++;else if(x<=200)sccBuckets.b101_200++;else if(x<500)sccBuckets.b201_499++;else sccBuckets.ge500++;if(x>1000)sccBuckets.over1000++}
   const dctCounts={};for(const c of cows)dctCounts[c.dct]=(dctCounts[c.dct]||0)+1;const clinical=dctCounts['Mastitis - Clinical']||0,subclinical=dctCounts['Mastitis - Subclinical']||0,sealantOnly=dctCounts['Teat Sealant only']||0,sa=dctCounts['SA DCT/Sealant Combo']||0,laBase=dctCounts['LA DCT/Sealant Combo']||0,laOrder=laBase+clinical+subclinical,sealantCows=sealantOnly+sa+laOrder,sealantTubes=sealantCows*4;const pregnant=cows.filter(c=>/pregnant/i.test(c.preg)).length;const pregnantSa=cows.filter(c=>/pregnant/i.test(c.preg)&&c.dct==='SA DCT/Sealant Combo').length;const pregnantLa=cows.filter(c=>/pregnant/i.test(c.preg)&&['LA DCT/Sealant Combo','Mastitis - Clinical','Mastitis - Subclinical'].includes(c.dct)).length;const pregnantSealant=cows.filter(c=>/pregnant/i.test(c.preg)&&c.dct==='Teat Sealant only').length;const emptyHeifers=cows.filter(c=>/empty/i.test(c.preg)&&c.yearBorn===seasonYear-2).length;
   const caseAnalysis=buildCaseAnalysis(mastitisRecords,herdById,seasonYear,peak,firstCalvers);
@@ -316,8 +325,8 @@ function renderResult(r){
 
   els.dataQuality.innerHTML=[
     coverageBox('Pregnancy status',r.coverage.preg,r.cows.length,'Used for DCT/carryover classification'),
-    coverageBox('BCS',r.coverage.bcs,r.cows.length,'Needed for individual dry-off timing'),
-    coverageBox('Expected calving date',r.coverage.expected,r.cows.length,'Needed for dry-off timing'),
+    coverageBox('BCS',r.coverage.bcs,r.cows.length,'Used for BCS-adjusted dry-off timing'),
+    coverageBox('Expected calving date',r.coverage.expected,r.cows.length,'Required for individual dry-off timing'),
     coverageBox('Latest SCC',r.coverage.latestScc,r.cows.length,'Cows present at the latest selected H/T'),
     coverageBox('Dry-period SCC comparison',r.coverage.transition,r.cows.length,'Requires pre-dry + first post-calving SCC'),
     coverageBox('Case-to-calving match',r.coverage.caseCalving,r.coverage.caseTotal,'Unmatched cases remain in season totals'),
