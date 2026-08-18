@@ -1,5 +1,14 @@
-MQR & DCT Consult — Draft 0.7.8
+MQR & DCT Consult — Draft 0.7.9
 
+
+
+v0.7.9 changes:
+- Standardised report rows so counts remain the main right-hand value and percentages sit underneath the metric heading, matching the Case timing from calving presentation.
+- Applied the same hierarchy to bar summaries including mastitis products, quarter distribution, SCC profile, SCC transitions, previous DCT / ITS products and Mastaplex organism breakdowns.
+- SCC profile bands updated to 0–149, 150–500, Over 500 and Over 1,000. Over 1,000 is shown as a subset of Over 500.
+- Updated the top SCC KPI from Latest SCC >200 to Latest SCC >500 to match the new profile bands.
+- Selective-DCT mastitis outcomes now show the cow count fraction as the main value and the percentage underneath the heading.
+- Service-worker cache bumped to v079.
 
 v0.7.8 changes:
 - Data completeness no longer flags a missing expected calving date when pregnancy status is recorded as Empty.

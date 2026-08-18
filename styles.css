@@ -21,7 +21,7 @@
 .coverage-item span{font-size:11px;color:var(--muted);line-height:1.35}
 .coverage-item.good{border-left:4px solid var(--good)}.coverage-item.warn{border-left:4px solid var(--warn)}.coverage-item.bad{border-left:4px solid var(--bad)}
 .summary-card{background:#fcfbf8}.summary-list{display:grid;gap:8px;margin-top:8px}.summary-point{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid #eee9e4}.summary-point:last-child{border-bottom:0}.summary-point>span{font-weight:900;color:var(--tan);font-size:18px;line-height:1}.summary-point p{margin:0;font-size:13px;line-height:1.45}
-.metric-row span:first-child{display:flex;flex-direction:column;gap:2px}.metric-row small{font-size:10px;color:var(--muted);font-weight:500}.na-copy{font-size:13px;color:var(--muted);font-style:italic}.context-note{font-size:11px;color:var(--muted);margin:12px 0 0;line-height:1.4}
+.metric-row span:first-child,.bar-label span:first-child{display:flex;flex-direction:column;gap:2px}.metric-row small,.bar-label small{font-size:10px;color:var(--muted);font-weight:500;line-height:1.2}.na-copy{font-size:13px;color:var(--muted);font-style:italic}.context-note{font-size:11px;color:var(--muted);margin:12px 0 0;line-height:1.4}
 .status-badge{display:inline-block;padding:4px 7px;border-radius:999px;font-size:10px;font-weight:800;background:#f1eeea;color:var(--muted);white-space:nowrap}.status-badge.good{background:#eaf4ef;color:var(--good)}.status-badge.warn{background:#fff4dc;color:var(--warn)}
 .trigger-row td{background:#fff8e9}.trigger-row td:first-child{font-weight:850;color:var(--warn)}.total-row td{font-weight:850;background:#f2eee9}
 @media(max-width:900px){.coverage-grid{grid-template-columns:repeat(2,1fr)}}
@@ -108,3 +108,7 @@
 .recommendation-guide b{color:var(--ink)}
 @media(max-width:760px){.recommendation-guide{grid-template-columns:1fr}}
 @media print{.recommendation-guide{display:none!important}}
+
+
+/* v0.7.9 — standardised count / percentage hierarchy */
+.bar-label strong{font-weight:850;text-align:right}.bar-label small{margin-top:1px}
