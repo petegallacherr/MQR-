@@ -1,5 +1,13 @@
-MQR & DCT Consult — Draft 0.7.10
+MQR & DCT Consult — Draft 0.7.11
 
+
+
+v0.7.11 changes:
+- Clarified the top consultation fact: “Pre-dry comparison” is now “Dry-period SCC comparison source” and shows the actual two herd-test sources used (for example May 2025 → Aug 2025, or 5th → 4th for generic MINDA H/T labels).
+- Broadened MINDA SCC heading date recognition to accept month/year, day-month-year, slash dates and ISO-style dates.
+- Generic H/T columns now retain up to 10 current-season tests plus one previous/pre-dry source instead of being limited to five SCC columns.
+- LIC / MyHerd PTPT code automatically converts to uppercase while typing and is output uppercase in the report.
+- Service-worker cache bumped to v0711.
 
 
 v0.7.10 changes:

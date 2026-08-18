@@ -79,9 +79,20 @@ function headersOf(rows){return rows?.length?Object.keys(rows[0]):[]}
 function findHeader(headers,aliases,contains=[]){const byNorm=new Map(headers.map(h=>[norm(h),h]));for(const a of aliases)if(byNorm.has(norm(a)))return byNorm.get(norm(a));for(const h of headers)if(contains.some(x=>norm(h).includes(norm(x))))return h;return null}
 
 function parseSccHeaderDate(header){
-  const s=clean(header);const m=s.match(/(?:Herd\s*Test\s*Results[-\s]*)?([A-Za-z]{3,9})\s+(20\d{2})\s*SCC/i);if(!m)return null;
+  const s=clean(header);
+  // Only inspect SCC / herd-test headings, but accept the common MINDA date styles:
+  // Apr 2025 SCC, 24 Apr 2025 SCC, 24/04/2025 SCC and 2025-04-24 SCC.
+  if(!/(scc|somatic|herd\s*test)/i.test(s))return null;
   const months={jan:0,january:0,feb:1,february:1,mar:2,march:2,apr:3,april:3,may:4,jun:5,june:5,jul:6,july:6,aug:7,august:7,sep:8,sept:8,september:8,oct:9,october:9,nov:10,november:10,dec:11,december:11};
-  const month=months[m[1].toLowerCase()];if(month==null)return null;return new Date(+m[2],month,1);
+  let m=s.match(/\b(20\d{2})[\/.-](\d{1,2})[\/.-](\d{1,2})\b/);
+  if(m){const d=new Date(+m[1],+m[2]-1,+m[3]);return isNaN(d)?null:d;}
+  m=s.match(/\b(\d{1,2})[\/.-](\d{1,2})[\/.-](20\d{2})\b/);
+  if(m){const d=new Date(+m[3],+m[2]-1,+m[1]);return isNaN(d)?null:d;}
+  m=s.match(/\b(\d{1,2})?\s*([A-Za-z]{3,9})[\s,.-]+(20\d{2})\b/i);
+  if(m){const month=months[m[2].toLowerCase()];if(month!=null){const d=new Date(+m[3],month,m[1]?+m[1]:1);return isNaN(d)?null:d;}}
+  m=s.match(/\b([A-Za-z]{3,9})[\s,.-]+(20\d{2})\b/i);
+  if(m){const month=months[m[1].toLowerCase()];if(month!=null)return new Date(+m[2],month,1);}
+  return null;
 }
 function sccDateLabel(d){return d?d.toLocaleDateString('en-NZ',{month:'short',year:'numeric'}):''}
 function detectHerd(rows){
@@ -99,7 +110,13 @@ function detectHerd(rows){
     const current=dated.filter(x=>x.date>=start&&x.date<end);const previous=dated.filter(x=>x.date<start)[0]||null;
     const selected=[...current,...(previous?[previous]:[])];map.scc=selected.map(x=>x.header);map.sccDates=selected.map(x=>sccDateLabel(x.date));map.sccAll=dated.map(x=>x.header);map.sccAllDates=dated.map(x=>sccDateLabel(x.date));map.currentHerdTests=current.length;map.previousHerdTest=previous?sccDateLabel(previous.date):'';
   }else{
-    const explicit=['Most recent H/T','2nd','3rd','4th','5th'].map(x=>findHeader(h,[x])).filter(Boolean);const sccLike=h.filter(x=>/scc|herd.?test|h\/t/i.test(x)&&!Object.values(map).includes(x));map.scc=[...new Set([...explicit,...sccLike])].slice(0,5);map.currentHerdTests=Math.min(4,Math.max(1,map.scc.length-(map.scc.length>1?1:0)));
+    const explicit=['Most recent H/T','2nd','3rd','4th','5th','6th','7th','8th','9th','10th'].map(x=>findHeader(h,[x])).filter(Boolean);
+    const sccLike=h.filter(x=>/scc|herd.?test|h\/t/i.test(x)&&!Object.values(map).includes(x));
+    map.scc=[...new Set([...explicit,...sccLike])].slice(0,11);
+    // With generic MINDA H/T labels, reserve the oldest available column as the
+    // previous/pre-dry comparison when there is more than one SCC column.
+    map.currentHerdTests=Math.min(10,Math.max(1,map.scc.length-(map.scc.length>1?1:0)));
+    map.previousHerdTestHeader=map.scc[map.currentHerdTests]||'';
   }
   if(!map.tag&&h.length)map.tag=h[0];return map;
 }
@@ -149,6 +166,13 @@ function updatePrescriptionFields(){
     els.prescriptionStatus.classList.toggle('complete',missing===0);
   }
 }
+// LIC / MyHerd PTPT codes are conventionally entered in capitals. Normalise the
+// stored value as the user types so reports and exports also receive uppercase text.
+els.ptptCode?.addEventListener('input',e=>{
+  const input=e.target,start=input.selectionStart,end=input.selectionEnd;
+  const upper=input.value.toUpperCase();
+  if(input.value!==upper){input.value=upper;try{input.setSelectionRange(start,end)}catch{}}
+});
 for(const id of prescriptionFieldIds){els[id]?.addEventListener('input',updatePrescriptionFields);els[id]?.addEventListener('change',updatePrescriptionFields)}
 updatePrescriptionFields();
 
@@ -320,8 +344,14 @@ function renderMonthly(rows){
 }
 function renderResult(r){
   state.result=r;els.report.classList.remove('hidden');els.errorBox.classList.add('hidden');const farm=clean(els.farmName.value)||'Unnamed farm',vet=clean(els.vetName.value)||'Veterinarian not entered';els.reportTitle.textContent=farm;els.reportMeta.textContent=`${vet} · Season ${els.seasonYear.value}/${String(+els.seasonYear.value+1).slice(-2)} · Generated ${new Date().toLocaleDateString('en-NZ')}`;
-  const herdDates=state.herd?.map?.sccDates||[],currentDates=herdDates.slice(0,+els.herdTests.value),previousDate=state.herd?.map?.previousHerdTest||herdDates[+els.herdTests.value]||'';const enteredStart=parseDate(els.calvingStart.value),expectedDry=parseDate(els.expectedDryOff.value);
-  const facts=[['Veterinarian',vet],['Analysis season',r.seasonWindow.label],['Dairy company',clean(els.dairyCompany.value)||'N/A'],['Supply number',clean(els.supplyNumber.value)||'N/A'],['LIC / MyHerd',clean(els.ptptCode.value)||'N/A'],['Heifers teat sealed?',clean(els.heifersSealed.value)||'N/A'],['Previous-season BMSCC',clean(els.bmsccPrevious.value)||'N/A'],['Current-season BMSCC',clean(els.bmsccCurrent.value)||'N/A'],['Current herd tests',currentDates.length?currentDates.join(', '):els.herdTests.value],['Pre-dry comparison',previousDate||'N/A'],['Peak cows',fmt(r.peak)],['First calvers',fmt(r.firstCalvers)],['SCC cut-offs',`${r.threshold} / ${r.laThreshold}`],['Plan start of calving',isoDate(enteredStart||r.calvingStart)||'N/A'],['Expected mid-calving',isoDate(r.midCalving)||'N/A'],['Expected dry-off',isoDate(expectedDry)||'N/A']];els.consultFacts.innerHTML=facts.map(([a,b])=>`<div class="fact"><b>${safe(a)}</b><span>${safe(b)}</span></div>`).join('');
+  const herdMap=state.herd?.map||{},herdDates=herdMap.sccDates||[],herdTests=+els.herdTests.value;
+  const currentDates=herdDates.slice(0,herdTests);
+  const previousSource=herdMap.previousHerdTest||herdDates[herdTests]||herdMap.previousHerdTestHeader||herdMap.scc?.[herdTests]||'';
+  const firstCurrentSource=(currentDates.length?currentDates[currentDates.length-1]:herdMap.scc?.[Math.max(0,herdTests-1)])||'';
+  const comparisonSource=previousSource&&firstCurrentSource?`${previousSource} → ${firstCurrentSource}`:(previousSource||'N/A — previous/pre-dry H/T not detected');
+  const currentTestDisplay=currentDates.length?currentDates.join(', '):(herdMap.scc?.slice(0,herdTests).join(', ')||String(herdTests));
+  const enteredStart=parseDate(els.calvingStart.value),expectedDry=parseDate(els.expectedDryOff.value);
+  const facts=[['Veterinarian',vet],['Analysis season',r.seasonWindow.label],['Dairy company',clean(els.dairyCompany.value)||'N/A'],['Supply number',clean(els.supplyNumber.value)||'N/A'],['LIC / MyHerd',clean(els.ptptCode.value).toUpperCase()||'N/A'],['Heifers teat sealed?',clean(els.heifersSealed.value)||'N/A'],['Previous-season BMSCC',clean(els.bmsccPrevious.value)||'N/A'],['Current-season BMSCC',clean(els.bmsccCurrent.value)||'N/A'],['Current herd tests',currentTestDisplay],['Dry-period SCC comparison source',comparisonSource],['Peak cows',fmt(r.peak)],['First calvers',fmt(r.firstCalvers)],['SCC cut-offs',`${r.threshold} / ${r.laThreshold}`],['Plan start of calving',isoDate(enteredStart||r.calvingStart)||'N/A'],['Expected mid-calving',isoDate(r.midCalving)||'N/A'],['Expected dry-off',isoDate(expectedDry)||'N/A']];els.consultFacts.innerHTML=facts.map(([a,b])=>`<div class="fact"><b>${safe(a)}</b><span>${safe(b)}</span></div>`).join('');
 
   els.dataQuality.innerHTML=[
     coverageBox('Pregnancy status',r.coverage.preg,r.cows.length,'Used for DCT/carryover classification'),
