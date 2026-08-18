@@ -1,5 +1,10 @@
-MQR & DCT Consult — Draft 0.7.7
+MQR & DCT Consult — Draft 0.7.8
 
+
+v0.7.8 changes:
+- Data completeness no longer flags a missing expected calving date when pregnancy status is recorded as Empty.
+- Updated the on-screen legend to explain that expected calving is only required for cows that are not recorded as Empty.
+- Service-worker cache bumped to v078.
 
 v0.7.7 changes:
 - Added an on-screen legend above Individual cow recommendations explaining Data completeness terms and the dry-off timing method.
