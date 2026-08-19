@@ -1,19 +1,28 @@
-MQR & DCT Consult — Draft 0.7.15
+MQR & DCT Consult — Draft 0.7.16
+0.7.16 changes:
+- Fixed Mastaplex seasonal filtering for exports that use alternative date/date-time column names.
+- Date detection now recognises Created/Started/Completed/Date-Time style headings and validates candidate date columns against the actual uploaded values.
+- Date parsing now supports NZ dd/mm/yyyy values with optional time, ISO-style dates, written dates such as 23 Aug 2025, native Excel dates, and Excel serial dates stored as numbers or text.
+- Mastaplex upload status now shows the detected date column.
+- Data coverage shows the detected Mastaplex date column plus the earliest/latest parsed date, making season-filter problems visible immediately.
+- Mastaplex column confidence now requires a date column because seasonal filtering depends on it.
+- Service-worker cache bumped to v0716.
 
-0.7.15
+
+0.7.16
 - Mastaplex results are now restricted to the selected dairy season (1 June to 31 May).
 - Mastaplex rows outside the selected season and rows without a usable date are excluded from summary counts, cow-level results and CSV output.
 - Data coverage now reports included, out-of-season and undated Mastaplex rows.
-- Service-worker cache bumped to v0715.
+- Service-worker cache bumped to v0716.
 
 
-v0.7.15 changes:
+v0.7.16 changes:
 - Simplified the Consultation summary DCT stock estimate into three separate tube counts.
 - SA DCT tubes = SA combination cows × 4 DCT tubes.
 - LA DCT tubes = LA combination/order cows × 4 DCT tubes, including clinical/subclinical cows assigned to the LA order.
 - All teat sealant tubes = every sealant-treated cow × 4 tubes (sealant-only + SA combo + LA combo/order cows).
 - Detailed DCT order-estimate section remains unchanged.
-- Service-worker cache bumped to v0715.
+- Service-worker cache bumped to v0716.
 
 v0.7.12 changes:
 - Consultation summary now lists the actual months that exceeded the monthly SMARTSAMM trigger instead of only returning the number of months.

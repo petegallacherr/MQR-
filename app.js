@@ -24,11 +24,21 @@ const median=arr=>{const a=arr.filter(Boolean).map(d=>d.getTime()).sort((x,y)=>x
 
 function parseDate(v){
   if(!v&&v!==0)return null;
-  if(v instanceof Date&&!isNaN(v))return v;
-  if(typeof v==='number'&&v>20000&&v<80000){const d=new Date(Date.UTC(1899,11,30));d.setUTCDate(d.getUTCDate()+v);return new Date(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate())}
+  if(v instanceof Date&&!isNaN(v))return new Date(v.getFullYear(),v.getMonth(),v.getDate());
+  const fromExcelSerial=n=>{if(!Number.isFinite(n)||n<=20000||n>=80000)return null;const d=new Date(Date.UTC(1899,11,30));d.setUTCDate(d.getUTCDate()+n);return new Date(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate())};
+  if(typeof v==='number'){const excel=fromExcelSerial(v);if(excel)return excel;}
   const s=clean(v);if(!s)return null;
-  const nz=s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/);if(nz){let y=+nz[3];if(y<100)y+=2000;const d=new Date(y,+nz[2]-1,+nz[1]);return isNaN(d)?null:d}
-  const d=new Date(s);return isNaN(d)?null:d;
+  if(/^\d{5}(?:\.\d+)?$/.test(s)){const excel=fromExcelSerial(Number(s));if(excel)return excel;}
+  let m=s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})(?:\s|T|$)/);
+  if(m){let y=+m[3];if(y<100)y+=2000;const d=new Date(y,+m[2]-1,+m[1]);if(d.getFullYear()===y&&d.getMonth()===+m[2]-1&&d.getDate()===+m[1])return d;}
+  m=s.match(/^(20\d{2})[\/\-.](\d{1,2})[\/\-.](\d{1,2})(?:\s|T|$)/);
+  if(m){const d=new Date(+m[1],+m[2]-1,+m[3]);if(d.getFullYear()===+m[1]&&d.getMonth()===+m[2]-1&&d.getDate()===+m[3])return d;}
+  const months={jan:0,january:0,feb:1,february:1,mar:2,march:2,apr:3,april:3,may:4,jun:5,june:5,jul:6,july:6,aug:7,august:7,sep:8,sept:8,september:8,oct:9,october:9,nov:10,november:10,dec:11,december:11};
+  m=s.match(/^(\d{1,2})\s+([A-Za-z]{3,9})[\s,.-]+(\d{2,4})/);
+  if(m){let y=+m[3];if(y<100)y+=2000;const mo=months[m[2].toLowerCase()];if(mo!=null){const d=new Date(y,mo,+m[1]);if(d.getFullYear()===y&&d.getMonth()===mo&&d.getDate()===+m[1])return d;}}
+  m=s.match(/^([A-Za-z]{3,9})\s+(\d{1,2})[\s,.-]+(\d{2,4})/);
+  if(m){let y=+m[3];if(y<100)y+=2000;const mo=months[m[1].toLowerCase()];if(mo!=null){const d=new Date(y,mo,+m[2]);if(d.getFullYear()===y&&d.getMonth()===mo&&d.getDate()===+m[2])return d;}}
+  const d=new Date(s);return isNaN(d)?null:new Date(d.getFullYear(),d.getMonth(),d.getDate());
 }
 function isoDate(d){return d?d.toLocaleDateString('en-NZ',{day:'2-digit',month:'short',year:'numeric'}):''}
 function dateKey(d){return d?`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`:''}
@@ -133,11 +143,35 @@ function detectTreatment(rows){
   };
   if(!map.tag&&h.length)map.tag=h[0];return map;
 }
-function detectMastaplex(rows){const h=headersOf(rows);const map={tag:findHeader(h,['Tag','Animal ID','Cow Number','Cow No','Animal','ID'],['tag','cow','animalid']),species:findHeader(h,['Species','Organism','Growth','Result','Bacteria'],['species','organism','growth','bacteria']),quarter:findHeader(h,['Quarter','Affected Quarter'],['quarter']),date:findHeader(h,['Date','Sample Date','Test Date','Collection Date','Culture Date','Result Date'],['sampledate','testdate','collectiondate','culturedate','resultdate'])};if(!map.date){const dateHeaders=h.filter(x=>/date/i.test(x));if(dateHeaders.length===1)map.date=dateHeaders[0];}if(!map.tag&&h.length>=3)map.tag=h[2];if(!map.species&&h.length>=5)map.species=h[4];return map}
-function confidence(kind,map){const req=kind==='herd'?['tag','scc']:kind==='mastaplex'?['tag','species']:['tag','date','drug'];return req.filter(k=>Array.isArray(map[k])?map[k].length:map[k]).length/req.length}
+function detectMastaplex(rows){
+  const h=headersOf(rows);
+  const map={
+    tag:findHeader(h,['Tag','Animal ID','Cow Number','Cow No','Animal','ID','Cow'],['tag','cow','animalid']),
+    species:findHeader(h,['Species','Organism','Growth','Result','Bacteria','Pathogen','Identification'],['species','organism','growth','bacteria','pathogen','identification']),
+    quarter:findHeader(h,['Quarter','Affected Quarter'],['quarter']),
+    date:findHeader(h,['Sample Date','Test Date','Collection Date','Culture Date','Result Date','Date','Date/Time','Date Time','Test Date/Time','Sample Date/Time','Created Date','Created At','Date Created','Started Date','Start Date','Test Started','Started At','Completed Date','Completed At'],['sampledate','testdate','collectiondate','culturedate','resultdate','datetime','createddate','createdat','datecreated','startdate','teststarted','startedat','completeddate','completedat'])
+  };
+  if(!map.date){
+    const candidates=h.filter(x=>/(date|time|created|started|start|collected|collection|completed)/i.test(x));
+    let best=null,bestScore=0;
+    for(const header of candidates){
+      const vals=rows.slice(0,200).map(r=>r[header]).filter(v=>clean(v));
+      if(!vals.length)continue;
+      const parsed=vals.filter(v=>parseDate(v)).length;
+      const score=parsed/vals.length;
+      if(score>bestScore){bestScore=score;best=header;}
+    }
+    if(best&&bestScore>=0.5)map.date=best;
+  }
+  if(!map.tag&&h.length>=3)map.tag=h[2];
+  if(!map.species&&h.length>=5)map.species=h[4];
+  return map;
+}
+function confidence(kind,map){const req=kind==='herd'?['tag','scc']:kind==='mastaplex'?['tag','species','date']:['tag','date','drug'];return req.filter(k=>Array.isArray(map[k])?map[k].length:map[k]).length/req.length}
 function setStatus(kind,rows,map,name){
   const el=els[`${kind}Status`],c=confidence(kind,map);el.className=`file-status ${c>=.99?'good':c>=.5?'warn':'bad'}`;
   if(kind==='herd'&&map.sccAllDates?.length){const selected=(map.sccDates||[]).join(', ');el.textContent=`${rows.length.toLocaleString()} rows · ${map.sccAllDates.length} dated herd tests detected · using ${selected} · ${name}`}
+  else if(kind==='mastaplex')el.textContent=`${rows.length.toLocaleString()} rows · ${c>=.99?'columns recognised':c>=.5?'check detected columns':'column match poor'} · date column: ${map.date||'NOT FOUND'} · ${name}`;
   else el.textContent=`${rows.length.toLocaleString()} rows · ${c>=.99?'columns recognised':c>=.5?'check detected columns':'column match poor'} · ${name}`;
   renderMappings();
 }
@@ -194,19 +228,21 @@ function treatmentRecords(data,mode){
 function indexByCow(records){const m=new Map();for(const r of records){if(!m.has(r.id))m.set(r.id,[]);m.get(r.id).push(r)}return m}
 function indexMastaplex(data,seasonYear){
   const byCow=new Map(),m=data?.map||{};
-  let recognised=0,inSeason=0,outOfSeason=0,undated=0;
+  let recognised=0,inSeason=0,outOfSeason=0,undated=0,firstParsed=null,lastParsed=null;
   for(const r of data?.rows||[]){
     const id=clean(r[m.tag]),species=clean(r[m.species]);
     if(!id||!species)continue;
     recognised++;
-    const date=parseDate(r[m.date]);
+    const date=m.date?parseDate(r[m.date]):null;
     if(!date){undated++;continue;}
+    if(!firstParsed||date<firstParsed)firstParsed=date;
+    if(!lastParsed||date>lastParsed)lastParsed=date;
     if(!inDairySeason(date,seasonYear)){outOfSeason++;continue;}
     inSeason++;
     if(!byCow.has(id))byCow.set(id,[]);
     byCow.get(id).push(species);
   }
-  return{byCow,recognised,inSeason,outOfSeason,undated};
+  return{byCow,recognised,inSeason,outOfSeason,undated,dateHeader:m.date||'',firstParsed,lastParsed};
 }
 function mastaplexGroup(result){
   const s=clean(result).toLowerCase().replace(/[._-]+/g,' ').replace(/\s+/g,' ').trim();
@@ -312,7 +348,7 @@ function buildResult(){
   const prevSealantOnlyMastitis=[...prevSealantOnlyCurrent].filter(id=>currentSeasonMastitisCows.has(id)).length;
   const species={},mastaplexGroups={'Gram positive':{},'Gram negative':{},'No bacterial growth':{},'Mixed / contaminated':{},'Other / unclassified':{}};for(const arr of mastaIndex.values())for(const s of arr){species[s]=(species[s]||0)+1;const g=mastaplexGroup(s);mastaplexGroups[g][s]=(mastaplexGroups[g][s]||0)+1;}
   const expectedDates=cows.map(c=>c.expectedCalving).filter(Boolean),calvingStart=expectedDates.length?new Date(Math.min(...expectedDates.map(d=>d.getTime()))):null,midCalving=median(expectedDates);
-  const coverage={preg:cows.filter(c=>c.preg).length,bcs:cows.filter(c=>c.bcs!=null).length,expected:cows.filter(c=>c.expectedCalving).length,latestScc:recent.length,transition:transitionAvailable,caseCalving:caseAnalysis.timing.matched,caseTotal:caseAnalysis.cases.length,mastitisRecognised:allMastitisRecords.length,mastitisInSeason:mastitisRecords.length,mastitisOutOfSeason,mastitisUndated,dctLoaded:!!state.dct,mastaplexLoaded:!!state.mastaplex,mastaplexRecognised:mastaSeason.recognised,mastaplexInSeason:mastaSeason.inSeason,mastaplexOutOfSeason:mastaSeason.outOfSeason,mastaplexUndated:mastaSeason.undated};
+  const coverage={preg:cows.filter(c=>c.preg).length,bcs:cows.filter(c=>c.bcs!=null).length,expected:cows.filter(c=>c.expectedCalving).length,latestScc:recent.length,transition:transitionAvailable,caseCalving:caseAnalysis.timing.matched,caseTotal:caseAnalysis.cases.length,mastitisRecognised:allMastitisRecords.length,mastitisInSeason:mastitisRecords.length,mastitisOutOfSeason,mastitisUndated,dctLoaded:!!state.dct,mastaplexLoaded:!!state.mastaplex,mastaplexRecognised:mastaSeason.recognised,mastaplexInSeason:mastaSeason.inSeason,mastaplexOutOfSeason:mastaSeason.outOfSeason,mastaplexUndated:mastaSeason.undated,mastaplexDateHeader:mastaSeason.dateHeader,mastaplexFirstParsed:mastaSeason.firstParsed,mastaplexLastParsed:mastaSeason.lastParsed};
   return{cows,peak,firstCalvers,recent,sccBuckets,dctCounts,clinical,subclinical,sealantOnly,sa,laBase,laOrder,sealantCows,sealantTubes,saDctTubes,laDctTubes,pregnant,pregnantSa,pregnantLa,pregnantSealant,emptyHeifers,caseAnalysis,transitionCounts,transitionAvailable,dctRecords,prevProducts,prevCowDct,prevCowSeal,prevComboCurrent,prevSealantOnlyCurrent,prevComboMastitis,prevSealantOnlyMastitis,species,mastaplexGroups,calvingStart,midCalving,coverage,seasonWindow,threshold:ts,laThreshold:la};
 }
 
@@ -377,7 +413,7 @@ function renderResult(r){
     coverageBox('Case-to-calving match',r.coverage.caseCalving,r.coverage.caseTotal,'Unmatched cases remain in season totals'),
     coverageBox('Mastitis rows in selected season',r.coverage.mastitisInSeason,r.coverage.mastitisRecognised,`${fmt(r.coverage.mastitisOutOfSeason)} outside ${r.seasonWindow.label}; ${fmt(r.coverage.mastitisUndated)} undated excluded`),
     coverageBox('Previous DCT / ITS',r.coverage.dctLoaded?'Loaded':'Not supplied',null,'Optional'),
-    r.coverage.mastaplexLoaded?coverageBox('Mastaplex results in selected season',r.coverage.mastaplexInSeason,r.coverage.mastaplexRecognised,`${fmt(r.coverage.mastaplexOutOfSeason)} outside ${r.seasonWindow.label}; ${fmt(r.coverage.mastaplexUndated)} undated excluded`):coverageBox('Mastaplex','Not supplied',null,'Optional')
+    r.coverage.mastaplexLoaded?coverageBox('Mastaplex results in selected season',r.coverage.mastaplexInSeason,r.coverage.mastaplexRecognised,`${fmt(r.coverage.mastaplexOutOfSeason)} outside ${r.seasonWindow.label}; ${fmt(r.coverage.mastaplexUndated)} undated excluded · date column: ${r.coverage.mastaplexDateHeader||'not detected'}${r.coverage.mastaplexFirstParsed?` · parsed range ${isoDate(r.coverage.mastaplexFirstParsed)}–${isoDate(r.coverage.mastaplexLastParsed)}`:''}`):coverageBox('Mastaplex','Not supplied',null,'Optional')
   ].join('');
 
   const seasonCases=r.caseAnalysis.cases.length,over500=r.sccBuckets.over500,monthsOverRows=r.caseAnalysis.monthly.filter(x=>x.overTrigger),monthsOver=monthsOverRows.length,monthsOverNames=monthsOverRows.map(x=>x.name),early30=r.caseAnalysis.timing.d0_7+r.caseAnalysis.timing.d8_30;
@@ -427,7 +463,7 @@ function renderResult(r){
       const groupBlock=(title,items,cls)=>`<section class="mastaplex-group ${cls}"><h4>${safe(title)}</h4>${items.length?barsHtml(items,Math.max(1,total)):'<p class="na-copy">None detected.</p>'}</section>`;
       const otherItems=[...ng,...mix,...other].sort((a,b)=>b[1]-a[1]);
       els.mastaplexSummary.innerHTML=`<div class="mastaplex-overview">${groupMetrics}</div><div class="mastaplex-group-grid">${groupBlock('Gram-positive organisms',gp,'gram-positive')}${groupBlock('Gram-negative organisms',gn,'gram-negative')}</div>${otherItems.length?`<div class="mastaplex-other">${groupBlock('Other Mastaplex results',otherItems,'other-results')}</div>`:''}<p class="context-note">Only Mastaplex results dated within ${safe(r.seasonWindow.label)} are included. Gram percentages compare classified bacterial growths only. No-growth, mixed/contaminated and unclassified results are shown separately. ${fmt(r.coverage.mastaplexOutOfSeason)} result${r.coverage.mastaplexOutOfSeason===1?' was':'s were'} outside the selected season and ${fmt(r.coverage.mastaplexUndated)} result${r.coverage.mastaplexUndated===1?' was':'s were'} undated; these were excluded.</p>`;
-    }else els.mastaplexSummary.innerHTML=`<p class="na-copy">Mastaplex file loaded, but no dated cultured-growth results fell within ${safe(r.seasonWindow.label)}.</p><p class="context-note">${fmt(r.coverage.mastaplexOutOfSeason)} result${r.coverage.mastaplexOutOfSeason===1?' was':'s were'} outside the selected season and ${fmt(r.coverage.mastaplexUndated)} result${r.coverage.mastaplexUndated===1?' was':'s were'} undated; these were excluded.</p>`;
+    }else els.mastaplexSummary.innerHTML=`<p class="na-copy">Mastaplex file loaded, but no cultured-growth results fell within ${safe(r.seasonWindow.label)}.</p><p class="context-note">Date column used: <strong>${safe(r.coverage.mastaplexDateHeader||'not detected')}</strong>. ${r.coverage.mastaplexFirstParsed?`Parsed date range: ${safe(isoDate(r.coverage.mastaplexFirstParsed))}–${safe(isoDate(r.coverage.mastaplexLastParsed))}. `:''}${fmt(r.coverage.mastaplexOutOfSeason)} result${r.coverage.mastaplexOutOfSeason===1?' was':'s were'} outside the selected season and ${fmt(r.coverage.mastaplexUndated)} result${r.coverage.mastaplexUndated===1?' was':'s were'} undated; these were excluded.</p>`;
   }else els.mastaplexSummary.innerHTML='<p class="na-copy">N/A — Mastaplex data not supplied.</p>';
 
   const order=[['Teat Sealant only',r.sealantOnly],['SA DCT/Sealant Combo',r.sa],['LA DCT/Sealant Combo',r.laBase],['Mastitis - Clinical',r.clinical],['Mastitis - Subclinical',r.subclinical],['Empty',r.dctCounts.Empty||0],['Absent from H/T',r.dctCounts['Absent from H/T (Culled/Carryover)']||0]];els.dctSummary.innerHTML=barsHtml(order,r.cows.length);
