@@ -216,6 +216,49 @@ const NSAIDS=['metacam 20mg/ml for injection','metacam 20mg/ml','key injection',
 function isNSAID(drug){const d=clean(drug).toLowerCase();return NSAIDS.some(x=>d.includes(x))}
 function isDctDrug(drug){const d=clean(drug).toLowerCase();return DCT_DRUGS.some(x=>d.includes(x))}
 function isSealant(drug){const d=clean(drug).toLowerCase();return SEALANTS.some(x=>d.includes(x))}
+
+// AMR reference catalogue. Categories follow the NZVA antimicrobial traffic-light
+// guidance checked August 2026. Product aliases are stored locally so the report
+// remains fully offline. Combination products use the highest recognised category.
+const AMR_CATALOGUE_VERSION='NZVA traffic-light guidance · checked Aug 2026';
+const AMR_CATALOGUE=[
+  {aliases:['intracillin 1000 milking cow','intracillin 1000','intracillin mc','masticillin'],active:'Procaine penicillin G',category:'green'},
+  {aliases:['mamyzin','penthaone'],active:'Penethamate hydriodide',category:'green'},
+  {aliases:['engemycin','oxytetracycline'],active:'Oxytetracycline',category:'green'},
+  {aliases:['penclox'],active:'Procaine penicillin G + cloxacillin',category:'yellow'},
+  {aliases:['clavulox lc','synulox lc','combiclav lc'],active:'Amoxicillin + clavulanic acid',category:'yellow'},
+  {aliases:['albiotic'],active:'Lincomycin + neomycin',category:'yellow'},
+  {aliases:['mastiplan'],active:'Cephapirin',category:'yellow'},
+  {aliases:['rilexine'],active:'Cephalexin (1st-generation cephalosporin)',category:'yellow'},
+  {aliases:['cepravin','quadrant dc','ceprotect'],active:'Cefalonium (1st-generation cephalosporin)',category:'yellow'},
+  {aliases:['cefa-safe','cefa safe'],active:'Cephapirin (1st-generation cephalosporin)',category:'yellow'},
+  {aliases:['dryclox dc','duramast dc 500'],active:'Ampicillin + cloxacillin',category:'yellow'},
+  {aliases:['duramast dc 600','juraclox','orbenin dry','orbenin enduro','orbenin la','noroclox dc 600','cloxamp dc'],active:'Cloxacillin',category:'yellow'},
+  {aliases:['amphoprim'],active:'Trimethoprim + sulphonamide',category:'yellow'},
+  {aliases:['mastalone'],active:'Oleandomycin + oxytetracycline + neomycin',category:'red'},
+  {aliases:['tylan','tylosin'],active:'Tylosin (macrolide)',category:'red'},
+  {aliases:['cobactan','cefquinome'],active:'Cefquinome (4th-generation cephalosporin)',category:'red'},
+  {aliases:['excenel','excede','ceftiofur'],active:'Ceftiofur (3rd-generation cephalosporin)',category:'red'},
+  {aliases:['baytril','enrofloxacin'],active:'Enrofloxacin (fluoroquinolone)',category:'red'},
+  {aliases:['gentamicin','gentamycin'],active:'Gentamicin',category:'red'},
+  {aliases:['teatseal','sureseal','u-seal','useal','dryseal','duraseal','dryzen'],active:'Internal teat sealant · non-antibiotic',category:'non-antibiotic'}
+];
+function amrInfo(drug){
+  const d=clean(drug).toLowerCase().replace(/[®™]/g,'').replace(/\s+/g,' ').trim();
+  if(!d)return{category:'unclassified',active:'Active ingredient not identified'};
+  const exact=AMR_CATALOGUE.find(item=>item.aliases.some(alias=>d.includes(alias)));
+  if(exact)return exact;
+  // Generic active-ingredient fallbacks help with brands that include the ingredient
+  // in their exported product name, while still refusing to guess unknown brands.
+  if(/procaine penicillin|penicillin g procaine|penethamate|tetracycline|oxytetracycline/.test(d))return{category:'green',active:'Active ingredient recognised from product name'};
+  if(/cloxacillin|ampicillin|cephapirin|cefapirin|cefalonium|cephalonium|cephalexin|cefalexin|lincomycin/.test(d))return{category:'yellow',active:'Active ingredient recognised from product name'};
+  if((/amoxicillin|amoxycillin/.test(d)&&/clavulan/.test(d))||(/trimethoprim/.test(d)&&/sulfa|sulpho/.test(d)))return{category:'yellow',active:'Active ingredient combination recognised from product name'};
+  if(/ceftiofur|cefquinome|enrofloxacin|marbofloxacin|danofloxacin|tylosin|erythromycin|spiramycin|oleandomycin|gentamicin|gentamycin/.test(d))return{category:'red',active:'Active ingredient recognised from product name'};
+  if(isSealant(drug))return{category:'non-antibiotic',active:'Internal teat sealant · non-antibiotic'};
+  return{category:'unclassified',active:'AMR category not classified'};
+}
+function amrBadgeHtml(info){const labels={green:'GREEN',yellow:'YELLOW',red:'RED','non-antibiotic':'NON-ANTIBIOTIC',unclassified:'UNCLASSIFIED'};return`<span class="amr-badge amr-${info.category}">${labels[info.category]||'UNCLASSIFIED'}</span>`}
+function amrBarsHtml(items,total){return items.map(([name,n])=>{const info=amrInfo(name),width=total?Math.min(100,n/total*100):0;return`<div class="bar-row amr-row"><div class="bar-label"><span class="amr-product"><span class="amr-product-title">${safe(name)} ${amrBadgeHtml(info)}</span><small>${safe(info.active)}</small></span><span class="bar-value"><strong>${fmt(n)}</strong>${total?`<small>${pct(n,total)}</small>`:''}</span></div><div class="bar-track"><div class="bar-fill amr-fill amr-${info.category}" style="width:${width}%"></div></div></div>`}).join('')}
 function classifyMastitis(cat){const c=clean(cat).toLowerCase();if(c.includes('subclinical'))return'Mastitis - Subclinical';if(c.includes('clinical')||c.includes('mastitis'))return'Mastitis - Clinical';return''}
 function parseQuarters(v){const raw=clean(v).toUpperCase();if(!raw)return[];return [...new Set(raw.split(/[^A-Z]+/).filter(q=>['LF','RF','LR','RR'].includes(q)))]}
 function dairySeasonWindow(seasonYear){const start=new Date(seasonYear,5,1),end=new Date(seasonYear+1,5,1);return{start,end,label:`1 Jun ${seasonYear}–31 May ${seasonYear+1}`}}
@@ -371,17 +414,18 @@ function renderMastitisChart(rows){
   const yRight=v=>T+plotH-(Math.max(0,v)/rightMax)*plotH;
   const groupW=plotW/rows.length,barW=Math.min(17,groupW*.19),gap=4;
   const esc=safe;
-  let svg=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" aria-labelledby="mastitisChartTitle mastitisChartDesc"><title id="mastitisChartTitle">Clinical mastitis monthly and seasonal trend</title><desc id="mastitisChartDesc">Grouped monthly bars show heifer, mature-age cow and whole-herd clinical mastitis rates. The red line is the monthly trigger and the orange line is cumulative season percentage.</desc>`;
+  let svg=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" aria-labelledby="mastitisChartTitle mastitisChartDesc"><title id="mastitisChartTitle">Clinical mastitis monthly and seasonal trend</title><desc id="mastitisChartDesc">Grouped monthly bars show heifer, mature-age cow and whole-herd clinical mastitis rates. Whole-herd monthly bars turn red when they exceed the SMARTSAMM monthly trigger. The red line is the trigger and the orange line is cumulative season percentage.</desc>`;
   for(let v=0;v<=leftMax+1e-9;v+=leftStep){const y=yLeft(v);svg+=`<line class="chart-grid" x1="${L}" y1="${y}" x2="${W-R}" y2="${y}"/><text class="chart-axis-label left" x="${L-10}" y="${y+4}">${mastitisAxisLabel(v)}</text>`}
   for(let v=0;v<=rightMax+1e-9;v+=rightStep){const y=yRight(v);svg+=`<text class="chart-axis-label right" x="${W-R+10}" y="${y+4}">${mastitisAxisLabel(v)}</text>`}
   svg+=`<line class="chart-axis" x1="${L}" y1="${T}" x2="${L}" y2="${T+plotH}"/><line class="chart-axis" x1="${W-R}" y1="${T}" x2="${W-R}" y2="${T+plotH}"/><line class="chart-axis" x1="${L}" y1="${T+plotH}" x2="${W-R}" y2="${T+plotH}"/><text class="chart-axis-title" x="20" y="${T+plotH/2}" transform="rotate(-90 20 ${T+plotH/2})">Cases per month (%)</text><text class="chart-axis-title" x="${W-18}" y="${T+plotH/2}" transform="rotate(90 ${W-18} ${T+plotH/2})">Accumulated season %</text>`;
   const triggerPts=[],seasonPts=[];
   rows.forEach((x,i)=>{
     const cx=L+groupW*(i+.5),baseY=T+plotH,barStart=cx-(barW*1.5+gap);
+    if(x.overTrigger)svg+=`<rect class="trigger-breach-zone" x="${L+groupW*i+2}" y="${T}" width="${Math.max(0,groupW-4)}" height="${plotH}" rx="4"/>`;
     const vals=[['heifer',x.heiferRate],['mature',x.matureRate],['monthly',x.rate]];
-    vals.forEach(([cls,v],j)=>{if(v==null)return;const y=yLeft(v),h=Math.max(0,baseY-y);svg+=`<rect class="mastitis-bar ${cls}" x="${barStart+j*(barW+gap)}" y="${y}" width="${barW}" height="${h}" rx="1"/>`});
+    vals.forEach(([cls,v],j)=>{if(v==null)return;const y=yLeft(v),h=Math.max(0,baseY-y),breach=cls==='monthly'&&x.overTrigger?' over-trigger':'';svg+=`<rect class="mastitis-bar ${cls}${breach}" x="${barStart+j*(barW+gap)}" y="${y}" width="${barW}" height="${h}" rx="1"/>`;if(cls==='monthly'&&x.overTrigger){const bx=barStart+j*(barW+gap)+barW/2,by=Math.max(T+10,y-11);svg+=`<circle class="breach-dot" cx="${bx}" cy="${by}" r="8"/><text class="breach-mark" x="${bx}" y="${by+3.5}" text-anchor="middle">!</text>`}});
     triggerPts.push(`${cx},${yLeft(x.trigger)}`);if(x.seasonPct!=null)seasonPts.push(`${cx},${yRight(x.seasonPct)}`);
-    svg+=`<text class="chart-month" x="${cx}" y="${baseY+25}" text-anchor="middle">${esc(x.name.slice(0,3))}</text><rect class="mastitis-hit" data-index="${i}" tabindex="0" x="${L+groupW*i}" y="${T}" width="${groupW}" height="${plotH+38}" fill="transparent"><title>${esc(x.name)} — Heifer ${ratioPct(x.heiferRate)}, MA cows ${ratioPct(x.matureRate)}, Monthly ${ratioPct(x.rate)}, Trigger ${ratioPct(x.trigger)}, Season ${ratioPct(x.seasonPct)}</title></rect>`;
+    svg+=`<text class="chart-month ${x.overTrigger?'over-trigger':''}" x="${cx}" y="${baseY+25}" text-anchor="middle">${esc(x.name.slice(0,3))}</text><rect class="mastitis-hit" data-index="${i}" tabindex="0" x="${L+groupW*i}" y="${T}" width="${groupW}" height="${plotH+38}" fill="transparent"><title>${esc(x.name)} — Heifer ${ratioPct(x.heiferRate)}, MA cows ${ratioPct(x.matureRate)}, Monthly ${ratioPct(x.rate)}, Trigger ${ratioPct(x.trigger)}, Season ${ratioPct(x.seasonPct)}${x.overTrigger?', ABOVE TRIGGER':''}</title></rect>`;
   });
   svg+=`<polyline class="mastitis-line trigger-line" points="${triggerPts.join(' ')}"/><polyline class="mastitis-line season-line" points="${seasonPts.join(' ')}"/>`;
   seasonPts.forEach(pt=>{const [x,y]=pt.split(',');svg+=`<circle class="season-point" cx="${x}" cy="${y}" r="3.5"/>`});
@@ -390,7 +434,7 @@ function renderMastitisChart(rows){
   els.mastitisChart.querySelectorAll('.mastitis-hit').forEach(hit=>{const i=Number(hit.dataset.index);hit.addEventListener('mouseenter',()=>showMonth(i));hit.addEventListener('focus',()=>showMonth(i));hit.addEventListener('click',()=>showMonth(i))});
 }
 function renderMonthly(rows){
-  els.monthlyTable.querySelector('tbody').innerHTML=rows.map(x=>`<tr class="${x.overTrigger?'trigger-row':''}"><td>${x.name}</td><td>${fmt(x.cases)}</td><td>${fmt(x.nsaid)}</td><td>${fmt(x.heifer)}</td><td>${fmt(x.mature)}</td><td>${pct(x.rate,1)}</td><td>${pct(x.trigger,1)}</td><td>${pct(x.seasonPct,1)}</td></tr>`).join('')+`<tr class="total-row"><td>Total</td><td>${fmt(rows.reduce((a,x)=>a+x.cases,0))}</td><td>${fmt(rows.reduce((a,x)=>a+x.nsaid,0))}</td><td>${fmt(rows.reduce((a,x)=>a+x.heifer,0))}</td><td>${fmt(rows.reduce((a,x)=>a+x.mature,0))}</td><td>${pct(rows.reduce((a,x)=>a+x.cases,0),state.result?.peak)}</td><td>14.0%</td><td>${pct(rows.length?rows[rows.length-1].seasonPct:null,1)}</td></tr>`;
+  els.monthlyTable.querySelector('tbody').innerHTML=rows.map(x=>{const monthly=x.overTrigger?`<span class="trigger-breach-value"><strong>${pct(x.rate,1)}</strong><small>Above trigger</small></span>`:pct(x.rate,1);return`<tr class="${x.overTrigger?'trigger-row':''}"><td>${x.name}${x.overTrigger?' <span class="table-alert-dot" title="Above SMARTSAMM trigger">!</span>':''}</td><td>${fmt(x.cases)}</td><td>${fmt(x.nsaid)}</td><td>${fmt(x.heifer)}</td><td>${fmt(x.mature)}</td><td>${monthly}</td><td>${pct(x.trigger,1)}</td><td>${pct(x.seasonPct,1)}</td></tr>`}).join('')+`<tr class="total-row"><td>Total</td><td>${fmt(rows.reduce((a,x)=>a+x.cases,0))}</td><td>${fmt(rows.reduce((a,x)=>a+x.nsaid,0))}</td><td>${fmt(rows.reduce((a,x)=>a+x.heifer,0))}</td><td>${fmt(rows.reduce((a,x)=>a+x.mature,0))}</td><td>${pct(rows.reduce((a,x)=>a+x.cases,0),state.result?.peak)}</td><td>14.0%</td><td>${pct(rows.length?rows[rows.length-1].seasonPct:null,1)}</td></tr>`;
   renderMastitisChart(rows);
 }
 function renderResult(r){
@@ -417,7 +461,7 @@ function renderResult(r){
   ].join('');
 
   const seasonCases=r.caseAnalysis.cases.length,over500=r.sccBuckets.over500,monthsOverRows=r.caseAnalysis.monthly.filter(x=>x.overTrigger),monthsOver=monthsOverRows.length,monthsOverNames=monthsOverRows.map(x=>x.name),early30=r.caseAnalysis.timing.d0_7+r.caseAnalysis.timing.d8_30;
-  els.kpis.innerHTML=[['Clinical case events',fmt(seasonCases)],['Season case %',pct(seasonCases,r.peak)],['Latest SCC >500',pct(over500,r.recent.length)],['Repeat cows',fmt(r.caseAnalysis.repeatCows)],['Retained post-DCT',fmt(r.transitionCounts['Retained Infection'])],['Sealant tubes',fmt(r.sealantTubes)]].map(([label,value])=>`<div class="kpi"><div class="value">${safe(value)}</div><div class="label">${safe(label)}</div></div>`).join('');
+  els.kpis.innerHTML=[['Clinical case events',fmt(seasonCases)],['Season case %',pct(seasonCases,r.peak)],['Latest SCC >500',pct(over500,r.recent.length)],['Repeat cows',fmt(r.caseAnalysis.repeatCows)],['Retained post-DCT',fmt(r.transitionCounts['Retained Infection'])]].map(([label,value])=>`<div class="kpi"><div class="value">${safe(value)}</div><div class="label">${safe(label)}</div></div>`).join('');
 
   const summary=[];
   summary.push(`There were ${fmt(seasonCases)} clinical antibiotic case events across ${fmt(r.caseAnalysis.uniqueCows)} cows (${pct(seasonCases,r.peak)} of peak cow numbers by case count).`);
@@ -432,7 +476,7 @@ function renderResult(r){
   renderMonthly(r.caseAnalysis.monthly);
   const t=r.caseAnalysis.timing;els.caseTiming.innerHTML=metricsHtml([['0–7 days',fmt(t.d0_7),`${pct(t.d0_7,t.matched)} of matched cases`],['8–30 days',fmt(t.d8_30),`${pct(t.d8_30,t.matched)} of matched cases`],['Over 30 days',fmt(t.over30),`${pct(t.over30,t.matched)} of matched cases`],['Pre-calving',fmt(t.pre),`${pct(t.pre,t.matched)} of matched cases`],['Timing unavailable',fmt(t.unavailable),'Missing/unusable calving-date match'],['Usable timing coverage',`${fmt(t.matched)} / ${fmt(r.caseAnalysis.cases.length)}`,pct(t.matched,r.caseAnalysis.cases.length)]]);
   els.caseSummary.innerHTML=metricsHtml([['Cows treated with antibiotic',fmt(r.caseAnalysis.uniqueCows)],['Repeat cows',fmt(r.caseAnalysis.repeatCows),`${pct(r.caseAnalysis.repeatCows,r.peak)} of peak cows`],['Repeat cow + same quarter',fmt(r.caseAnalysis.repeatQuarterCows)],['Ab + NSAID combination cases',fmt(r.caseAnalysis.combo),`${pct(r.caseAnalysis.combo,r.caseAnalysis.cases.length)} of clinical case events`],['Extended antibiotic cases (>3 doses)',fmt(r.caseAnalysis.extended)],['Treatment change within same case',fmt(r.caseAnalysis.txChanges)],['Treatment cases not matched to herd file',fmt(r.caseAnalysis.unmatchedCowCases)]]);
-  const products=Object.entries(r.caseAnalysis.productCounts).sort((a,b)=>b[1]-a[1]);els.drugSummary.innerHTML=products.length?barsHtml(products,r.caseAnalysis.antibioticRows.length)+metricsHtml([['Antibiotic treatment rows',fmt(r.caseAnalysis.antibioticRows.length)],['NSAID treatment rows',fmt(r.caseAnalysis.nsaidRows.length)],['NSAID-paired case events',fmt(r.caseAnalysis.combo)]]):'<p class="na-copy">N/A — no antibiotic treatment products detected.</p>';
+  const products=Object.entries(r.caseAnalysis.productCounts).sort((a,b)=>b[1]-a[1]);els.drugSummary.innerHTML=products.length?amrBarsHtml(products,r.caseAnalysis.antibioticRows.length)+`<div class="amr-legend"><span>${amrBadgeHtml({category:'green'})} first-line</span><span>${amrBadgeHtml({category:'yellow'})} restricted</span><span>${amrBadgeHtml({category:'red'})} critically important</span></div><p class="amr-note">NZVA traffic-light category by recognised active ingredient. Combination products use the highest recognised ingredient category. Unknown products remain Unclassified. ${safe(AMR_CATALOGUE_VERSION)}.</p>`+metricsHtml([['Antibiotic treatment rows',fmt(r.caseAnalysis.antibioticRows.length)],['NSAID treatment rows',fmt(r.caseAnalysis.nsaidRows.length)],['NSAID-paired case events',fmt(r.caseAnalysis.combo)]]):'<p class="na-copy">N/A — no antibiotic treatment products detected.</p>';
   const q=Object.entries(r.caseAnalysis.quarters).filter(([,n])=>n>0);els.quarterSummary.innerHTML=q.length?barsHtml(q,r.caseAnalysis.cases.length)+`<p class="context-note">Percentages use clinical case events as the denominator. A multi-quarter case is counted once under Multi.</p>`:'<p class="na-copy">N/A — no quarter information detected.</p>';
   els.sccSummary.innerHTML=r.recent.length?barsHtml([['0–150',r.sccBuckets.b0_149],['150–500',r.sccBuckets.b150_500],['Over 500',r.sccBuckets.over500],['Over 1,000',r.sccBuckets.over1000]],r.recent.length)+metricsHtml([['Cows with latest SCC',fmt(r.recent.length)]])+`<p class="context-note">For threshold handling, an SCC of exactly 150 is counted in the 150–500 group. Over 1,000 is a subset of Over 500. SCC values of 0 are treated as unavailable rather than a true SCC result.</p>`:'<p class="na-copy">N/A — no usable latest herd-test SCC values.</p>';
   const transitionItems=[['Cured',r.transitionCounts['Cured']],['Retained infection',r.transitionCounts['Retained Infection']],['New infection',r.transitionCounts['New Infection']],['Remained low',r.transitionCounts['Low SCC']]];els.sccTransitions.innerHTML=r.transitionAvailable?barsHtml(transitionItems,r.transitionAvailable)+metricsHtml([['Usable comparisons',`${fmt(r.transitionAvailable)} / ${fmt(r.cows.length)}`],['Missed first post-calving H/T',fmt(r.transitionCounts['Missed H/T'])],['Pre-dry comparison unavailable',fmt(r.transitionCounts['Not available'])],['Threshold used',`${fmt(r.threshold)} ×1000`]]):'<p class="na-copy">N/A — pre-dry and first post-calving SCC values were not both available.</p>';
@@ -447,7 +491,7 @@ function renderResult(r){
       const selectiveNote=sealDen
         ? 'Rates use cows matched to the current herd file. Mastitis means at least one current-season mastitis case event; this is an outcome comparison, not proof that the previous dry-off treatment caused or prevented a case.'
         : 'No previous sealant-only cows were detected among cows matched to the current herd. A selective-treatment comparison is therefore not available for this season.';
-      els.previousDctSummary.innerHTML=`<div class="previous-dct-layout"><div><h4>Previous dry-off products</h4>${barsHtml(pp,Math.max(1,r.dctRecords.length))}${metricsHtml([['Cows with DCT',fmt(r.prevCowDct.size)],['Cows with sealant',fmt(r.prevCowSeal.size)]])}</div><div class="order-box selective-dct-box"><h4>Current-season mastitis by previous treatment</h4>${metricsHtml([['Previous DCT + sealant combo cows',fmt(comboDen),'Matched to current herd'],['DCT combo → mastitis this season',comboOutcome,comboOutcomeNote],['Previous sealant-only cows',fmt(sealDen),'Matched to current herd'],['Sealant only → mastitis this season',sealOutcome,sealOutcomeNote]])}<p class="context-note">${safe(selectiveNote)}</p></div></div>`;
+      els.previousDctSummary.innerHTML=`<div class="previous-dct-layout"><div><h4>Previous dry-off products</h4>${amrBarsHtml(pp,Math.max(1,r.dctRecords.length))}<p class="amr-note">Antibiotic products use the NZVA AMR traffic-light category; combination products use the highest recognised ingredient category, and teat sealants are marked Non-antibiotic. Unknown products remain Unclassified.</p>${metricsHtml([['Cows with DCT',fmt(r.prevCowDct.size)],['Cows with sealant',fmt(r.prevCowSeal.size)]])}</div><div class="order-box selective-dct-box"><h4>Current-season mastitis by previous treatment</h4>${metricsHtml([['Previous DCT + sealant combo cows',fmt(comboDen),'Matched to current herd'],['DCT combo → mastitis this season',comboOutcome,comboOutcomeNote],['Previous sealant-only cows',fmt(sealDen),'Matched to current herd'],['Sealant only → mastitis this season',sealOutcome,sealOutcomeNote]])}<p class="context-note">${safe(selectiveNote)}</p></div></div>`;
     }else els.previousDctSummary.innerHTML='<p class="na-copy">Previous DCT / ITS file loaded, but no recognised DCT or sealant products were detected.</p>';
   }else els.previousDctSummary.innerHTML='<p class="na-copy">N/A — previous DCT / ITS data not supplied.</p>';
   const sp=Object.entries(r.species).sort((a,b)=>b[1]-a[1]);
@@ -466,7 +510,7 @@ function renderResult(r){
     }else els.mastaplexSummary.innerHTML=`<p class="na-copy">Mastaplex file loaded, but no cultured-growth results fell within ${safe(r.seasonWindow.label)}.</p><p class="context-note">Date column used: <strong>${safe(r.coverage.mastaplexDateHeader||'not detected')}</strong>. ${r.coverage.mastaplexFirstParsed?`Parsed date range: ${safe(isoDate(r.coverage.mastaplexFirstParsed))}–${safe(isoDate(r.coverage.mastaplexLastParsed))}. `:''}${fmt(r.coverage.mastaplexOutOfSeason)} result${r.coverage.mastaplexOutOfSeason===1?' was':'s were'} outside the selected season and ${fmt(r.coverage.mastaplexUndated)} result${r.coverage.mastaplexUndated===1?' was':'s were'} undated; these were excluded.</p>`;
   }else els.mastaplexSummary.innerHTML='<p class="na-copy">N/A — Mastaplex data not supplied.</p>';
 
-  const order=[['Teat Sealant only',r.sealantOnly],['SA DCT/Sealant Combo',r.sa],['LA DCT/Sealant Combo',r.laBase],['Mastitis - Clinical',r.clinical],['Mastitis - Subclinical',r.subclinical],['Empty',r.dctCounts.Empty||0],['Absent from H/T',r.dctCounts['Absent from H/T (Culled/Carryover)']||0]];els.dctSummary.innerHTML=barsHtml(order,r.cows.length);
+  const order=[['Teat Sealant only',r.sealantOnly],['SA DCT/Sealant Combo',r.sa],['LA DCT/Sealant Combo',r.laBase],['Mastitis - Clinical',r.clinical],['Mastitis - Subclinical',r.subclinical],['Empty',r.dctCounts.Empty||0],['Absent from H/T',r.dctCounts['Absent from H/T (Culled/Carryover)']||0]];els.dctSummary.innerHTML=barsHtml(order,r.cows.length)+`<p class="amr-note">SA / LA recommendation bands are not AMR-coloured because the prescribed DCT product has not yet been selected. Recorded previous DCT products above are colour-coded where recognised.</p>`;
   els.dctOrder.innerHTML=`<div class="order-box"><h4>Order estimate</h4>${metricsHtml([['SA DCT combo cows',fmt(r.sa)],['LA DCT combo cows',fmt(r.laOrder),'Includes clinical/subclinical cows'],['Sealant-only cows',fmt(r.sealantOnly)],['Total sealant cows',fmt(r.sealantCows)],['Total sealant tubes',fmt(r.sealantTubes)],['Pregnant cows',fmt(r.pregnant)],['Pregnant SA combo',fmt(r.pregnantSa)],['Pregnant LA combo',fmt(r.pregnantLa)],['Pregnant sealant only',fmt(r.pregnantSealant)],['Empty heifers / carryover candidates',fmt(r.emptyHeifers)],['Pregnancy-data coverage',`${fmt(r.coverage.preg)} / ${fmt(r.cows.length)}`,r.coverage.preg<r.cows.length?'Order provisional where pregnancy is missing':'Complete']])}</div>`;
   renderCowTable(r.cows);els.report.scrollIntoView({behavior:'smooth',block:'start'});
 }

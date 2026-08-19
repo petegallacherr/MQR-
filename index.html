@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#5c4b3a" />
-  <title>MQR & DCT Consult — Draft 0.7.16</title>
+  <title>MQR & DCT Consult — Draft 0.7.17</title>
   <link rel="manifest" href="manifest.webmanifest" />
-  <link rel="stylesheet" href="styles.css?v=0716" />
+  <link rel="stylesheet" href="styles.css?v=0717" />
 </head>
 <body>
   <header class="topbar">
@@ -15,7 +15,7 @@
       <h1>MQR & DCT Consult</h1>
       <p class="subtitle">Milk quality review, treatment analysis and dry cow consultation from farm data exports.</p>
     </div>
-    <span class="pill">Draft 0.7.16</span>
+    <span class="pill">Draft 0.7.17</span>
   </header>
 
   <main class="page-shell">
@@ -179,7 +179,7 @@
 
       <article class="report-card full-width mastitis-trend-card">
         <div class="card-title-row">
-          <div><h3>Clinical mastitis — monthly &amp; seasonal trend</h3><p>Monthly case rates are shown for heifers, mature-age cows and the whole herd, with the spreadsheet trigger and cumulative season rate.</p></div>
+          <div><h3>Clinical mastitis — monthly &amp; seasonal trend</h3><p>Monthly case rates are shown for heifers, mature-age cows and the whole herd, with the SMARTSAMM monthly trigger and cumulative season rate. Months above trigger are highlighted in red.</p></div>
           <span class="mini-note">Season reference: 14%</span>
         </div>
         <div class="mastitis-chart-shell">
@@ -190,6 +190,7 @@
             <span><i class="legend-swatch heifer"></i>Heifer %</span>
             <span><i class="legend-swatch mature"></i>MA cows %</span>
             <span><i class="legend-swatch monthly"></i>Monthly %</span>
+            <span><i class="legend-swatch breach"></i>Monthly % above trigger</span>
             <span><i class="legend-line trigger"></i>Trigger</span>
             <span><i class="legend-line season"></i>Season %</span>
           </div>
@@ -263,7 +264,7 @@
       <article id="cowRecommendationsSection" class="report-card full-width">
         <div class="table-head">
           <div><h3>Individual cow recommendations</h3><p id="cowCountText"></p></div>
-          <div class="table-head-actions"><input id="cowSearch" class="search" placeholder="Search cow / advice / status…" /><button id="cowCsvBtn" class="button ghost" type="button" onclick="document.getElementById('csvBtn').click()">Export recommendations CSV</button></div>
+          <div class="table-head-actions"><button id="cowCsvBtn" class="button ghost" type="button" onclick="document.getElementById('csvBtn').click()">Export recommendations CSV</button></div>
         </div>
         <div class="recommendation-guide" aria-label="Individual cow recommendation guide">
           <div>
@@ -274,6 +275,12 @@
             <h4>How dry-off advice is calculated</h4>
             <p><b>BCS + expected calving date:</b> uses the BCS-adjusted timing calculation. <b>Expected calving date only:</b> if BCS is missing, uses a 50-day dry period before the expected calving date. <b>No expected calving date:</b> dry-off timing is unavailable.</p>
           </div>
+        </div>
+        <div class="cow-tools">
+          <label class="cow-search-wrap" for="cowSearch">
+            <span class="search-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><circle cx="11" cy="11" r="6.5"></circle><path d="M16 16l5 5"></path></svg></span>
+            <input id="cowSearch" class="search" placeholder="Search cow / advice / status…" aria-label="Search individual cow recommendations" />
+          </label>
         </div>
         <div class="table-wrap">
           <table id="cowTable">
@@ -287,6 +294,6 @@
     </section>
   </main>
 
-  <script src="app.js?v=0716"></script>
+  <script src="app.js?v=0717"></script>
 </body>
 </html>

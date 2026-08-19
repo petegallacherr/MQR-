@@ -1,4 +1,13 @@
-MQR & DCT Consult — Draft 0.7.16
+MQR & DCT Consult — Draft 0.7.17
+0.7.17 changes:
+- Stronger SMARTSAMM trigger visual: months above the monthly trigger use red monthly bars, a red alert marker, and a clearly highlighted table row / Above trigger badge. These styles are retained in Print / Save PDF.
+- Added a local AMR reference catalogue based on NZVA traffic-light categories, checked August 2026. Recognised mastitis and previous DCT antibiotic products show active ingredient plus GREEN / YELLOW / RED badges and matching bar colours.
+- Combination products use the highest recognised AMR category. Teat sealants are labelled NON-ANTIBIOTIC. Unknown products are UNCLASSIFIED rather than guessed.
+- Removed the lone Sealant tubes KPI from the opening summary row; the detailed DCT tube estimate remains in the consultation summary and order section.
+- Moved the individual-cow search field to immediately above the cow table and added a magnifying-glass icon.
+- Generic SA / LA recommendation bands are deliberately not AMR-coloured until an actual prescribed product is selected.
+- Service-worker cache bumped to v0717.
+
 0.7.16 changes:
 - Fixed Mastaplex seasonal filtering for exports that use alternative date/date-time column names.
 - Date detection now recognises Created/Started/Completed/Date-Time style headings and validates candidate date columns against the actual uploaded values.
