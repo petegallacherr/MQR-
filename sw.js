@@ -1,4 +1,4 @@
-const CACHE='mqr-dct-draft-v0721';
+const CACHE='mqr-dct-draft-v0723';
 const ASSETS=['./','./index.html','./styles.css?v=0720','./app.js?v=0720','./manifest.webmanifest'];
 self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)))});
 self.addEventListener('activate',e=>e.waitUntil(Promise.all([self.clients.claim(),caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k))))])));

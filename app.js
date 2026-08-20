@@ -543,8 +543,17 @@ function renderResult(r){
   renderCowTable(r.cows);els.report.scrollIntoView({behavior:'smooth',block:'start'});
 }
 function renderCowTable(cows){
-  const q=clean(els.cowSearch.value).toLowerCase(),filtered=cows.filter(c=>!q||[c.id,c.dct,c.advice,c.dryPeriod.status,c.preg,c.dataNote,...c.mastaplex].join(' ').toLowerCase().includes(q));els.cowCountText.textContent=`Showing ${filtered.length.toLocaleString()} of ${cows.length.toLocaleString()} cows`;
-  els.cowTable.querySelector('tbody').innerHTML=filtered.map(c=>{const tone=c.dryPeriod.status==='Cured'||c.dryPeriod.status==='Low SCC'?'good':c.dryPeriod.status==='Retained Infection'||c.dryPeriod.status==='New Infection'?'warn':'neutral';return`<tr><td><span class="tag">${safe(c.id)}</span></td><td>${c.scc[0]??''}</td><td>${c.dryPeriod.pre??''}</td><td>${safe(c.preg||'N/A')}</td><td>${safe(c.dct)}</td><td>${safe(c.advice)}</td><td>${statusBadge(c.dryPeriod.status,tone)}</td><td>${safe(c.dataNote||'—')}</td><td>${safe(c.mastaplex.join(', '))}</td></tr>`}).join('');
+  const q=clean(els.cowSearch.value).toLowerCase(),filtered=cows.filter(c=>!q||[c.id,c.dct,c.advice,c.dryPeriod.status,c.dryPeriod.pre,c.dryPeriod.post,c.preg,c.dataNote,...c.mastaplex].join(' ').toLowerCase().includes(q));els.cowCountText.textContent=`Showing ${filtered.length.toLocaleString()} of ${cows.length.toLocaleString()} cows`;
+  const threshold=state.result?.threshold;
+  els.cowTable.querySelector('tbody').innerHTML=filtered.map(c=>{
+    const tone=c.dryPeriod.status==='Cured'||c.dryPeriod.status==='Low SCC'?'good':c.dryPeriod.status==='Retained Infection'||c.dryPeriod.status==='New Infection'?'warn':'neutral';
+    const hasPair=c.dryPeriod.pre!=null&&c.dryPeriod.pre!==0&&c.dryPeriod.post!=null&&c.dryPeriod.post!==0;
+    const comparison=hasPair?`<div class="scc-status-explain"><strong>${safe(c.dryPeriod.pre)} → ${safe(c.dryPeriod.post)}</strong><span>cutoff ${safe(threshold)}</span></div>`:'';
+    const clinicalMastitis=c.dct==='Mastitis - Clinical',subclinicalMastitis=c.dct==='Mastitis - Subclinical';
+    const mastitisFlag=clinicalMastitis?'<span class="mastitis-history-flag clinical">CLINICAL MASTITIS THIS SEASON</span>':subclinicalMastitis?'<span class="mastitis-history-flag subclinical">SUBCLINICAL MASTITIS THIS SEASON</span>':'';
+    const dctDisplay=(clinicalMastitis||subclinicalMastitis)?`${mastitisFlag}<div class="dct-reason"><strong>LA DCT + sealant</strong><span>Reason: mastitis history</span></div>`:safe(c.dct);
+    return`<tr><td><span class="tag">${safe(c.id)}</span></td><td>${c.scc[0]??''}</td><td>${c.dryPeriod.pre??''}</td><td>${c.dryPeriod.post??''}</td><td>${safe(c.preg||'N/A')}</td><td>${dctDisplay}</td><td>${safe(c.advice)}</td><td>${statusBadge(c.dryPeriod.status,tone)}${comparison}</td><td>${safe(c.dataNote||'—')}</td><td>${safe(c.mastaplex.join(', '))}</td></tr>`
+  }).join('');
 }
 els.cowSearch.addEventListener('input',()=>state.result&&renderCowTable(state.result.cows));
 els.generateBtn.addEventListener('click',()=>{
@@ -594,8 +603,8 @@ function resetForNewFarm(){
 els.newFarmBtn?.addEventListener('click',resetForNewFarm);
 function exportCowRecommendations(){
   if(!state.result)return;
-  const rows=[['Cow Tag','Latest SCC','Pre-dry SCC','Pregnancy Diagnosis','Expected Calving Date','BCS','Individual DCT Recommendation','Dry-off Advice','Dry-period SCC Status','Data Note','Mastaplex Result']];
-  for(const c of state.result.cows)rows.push([c.id,c.scc[0]??'',c.dryPeriod.pre??'',c.preg,isoDate(c.expectedCalving),c.bcs??'',c.dct,c.advice,c.dryPeriod.status,c.dataNote,c.mastaplex.join('; ')]);
+  const rows=[['Cow Tag','Latest SCC','Pre-dry SCC','First comparison SCC','SCC low/high cutoff','Pregnancy Diagnosis','Expected Calving Date','BCS','Individual DCT Recommendation','Dry-off Advice','Dry-period SCC Status','Dry-period SCC comparison','Data Note','Mastaplex Result']];
+  for(const c of state.result.cows)rows.push([c.id,c.scc[0]??'',c.dryPeriod.pre??'',c.dryPeriod.post??'',state.result.threshold??'',c.preg,isoDate(c.expectedCalving),c.bcs??'',c.dct,c.advice,c.dryPeriod.status,(c.dryPeriod.pre&&c.dryPeriod.post)?`${c.dryPeriod.pre} -> ${c.dryPeriod.post}`:'',c.dataNote,c.mastaplex.join('; ')]);
   const csv='\uFEFF'+rows.map(r=>r.map(x=>`"${String(x??'').replace(/"/g,'""')}"`).join(',')).join('\r\n');
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
