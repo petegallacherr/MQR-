@@ -1,11 +1,18 @@
-MQR & DCT Consult — Draft 0.7.19
-0.7.19 changes:
+MQR & DCT Consult — Draft 0.7.21
+
+Version 0.7.21
+- Corrected severe-mastitis recognition for MINDA labels such as “Mastitis - Black” and “Mastitis - Enzootic Necrotic”.
+- Severe mastitis diagnoses now force a clinical case event even if only supportive/no antibiotic treatment is recorded.
+- Added Bivatop 200 / Bivatop to the AMR catalogue as oxytetracycline (Green).
+- Service-worker cache bumped to v0721.
+
+0.7.21 changes:
 - Added a New farm / Start new report button to the generated report header.
 - The action requires confirmation before clearing the current consultation.
 - Reset clears farm/client details, uploaded file data and file controls, generated results, cow search, warnings and report state.
 - Agreed defaults are restored for the new consultation, including SCC thresholds and current season year.
 - The page returns to the top ready for the next farm.
-- Service-worker cache bumped to v0719.
+- Service-worker cache bumped to v0720.
 
 0.7.18 changes:
 - Added a herd-test count safety guard to prevent the wrong current-season test count from skewing individual-cow SCC and DCT recommendations.
