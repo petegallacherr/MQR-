@@ -1,7 +1,7 @@
 'use strict';
 
 const state={herd:null,mastitis:null,dct:null,mastaplex:null,result:null};
-const ids=['farmName','vetName','seasonYear','herdTests','herdTestsGuard','peakCows','firstCalvers','sccTs','sccLa','dairyCompany','supplyNumber','ptptCode','heifersSealed','bmsccPrevious','bmsccCurrent','calvingStart','expectedDryOff','prescriptionStatus','herdFile','mastitisFile','dctFile','mastaplexFile','herdStatus','mastitisStatus','dctStatus','mastaplexStatus','mappingPanel','generateBtn','viewReportBtn','generateStatus','demoBtn','errorBox','report','reportTitle','reportMeta','consultFacts','dataQuality','kpis','executiveSummary','mastitisChart','mastitisChartTooltip','monthlyTable','caseTiming','caseSummary','drugSummary','sccSummary','sccTransitions','quarterSummary','mastaplexSummary','previousDctSummary','dctSummary','dctOrder','cowTable','cowCountText','cowSearch','cowCsvBtn','csvBtn','printBtn'];
+const ids=['farmName','vetName','seasonYear','herdTests','herdTestsGuard','peakCows','firstCalvers','sccTs','sccLa','dairyCompany','supplyNumber','ptptCode','heifersSealed','bmsccPrevious','bmsccCurrent','calvingStart','expectedDryOff','prescriptionStatus','herdFile','mastitisFile','dctFile','mastaplexFile','herdStatus','mastitisStatus','dctStatus','mastaplexStatus','mappingPanel','generateBtn','viewReportBtn','generateStatus','demoBtn','errorBox','report','reportTitle','reportMeta','consultFacts','dataQuality','kpis','executiveSummary','mastitisChart','mastitisChartTooltip','monthlyTable','caseTiming','caseSummary','drugSummary','sccSummary','sccTransitions','quarterSummary','mastaplexSummary','previousDctSummary','dctSummary','dctOrder','cowTable','cowCountText','cowSearch','cowCsvBtn','csvBtn','printBtn','newFarmBtn'];
 const els=Object.fromEntries(ids.map(id=>[id,document.getElementById(id)]));
 els.seasonYear.value=new Date().getFullYear()-1;
 function defaultCalvingStartFromSeason(){
@@ -551,6 +551,43 @@ els.generateBtn.addEventListener('click',()=>{
 });
 els.viewReportBtn.addEventListener('click',()=>els.report.scrollIntoView({behavior:'smooth',block:'start'}));
 els.printBtn.addEventListener('click',()=>window.print());
+function resetForNewFarm(){
+  const confirmed=window.confirm('Start a new report? Current farm details, uploaded files and generated results will be cleared.');
+  if(!confirmed)return;
+
+  state.herd=null;state.mastitis=null;state.dct=null;state.mastaplex=null;state.result=null;
+
+  // Reset consult inputs to a clean new-farm state while retaining the agreed defaults.
+  const clearIds=['farmName','vetName','peakCows','firstCalvers','dairyCompany','supplyNumber','ptptCode','bmsccPrevious','bmsccCurrent','expectedDryOff'];
+  for(const id of clearIds)if(els[id])els[id].value='';
+  if(els.heifersSealed)els.heifersSealed.value='';
+  if(els.seasonYear)els.seasonYear.value=String(new Date().getFullYear()-1);
+  if(els.herdTests){els.herdTests.disabled=false;els.herdTests.value='4';delete els.herdTests.dataset.userSet;}
+  if(els.sccTs)els.sccTs.value='150';
+  if(els.sccLa)els.sccLa.value='250';
+  defaultCalvingStartFromSeason();
+
+  // Clear the browser file inputs as well as the in-memory data so the same
+  // filename can be selected again for the next client if necessary.
+  for(const id of ['herdFile','mastitisFile','dctFile','mastaplexFile'])if(els[id])els[id].value='';
+  for(const kind of ['herd','mastitis','dct','mastaplex']){
+    const el=els[`${kind}Status`];
+    if(el){el.className='file-status neutral';el.textContent='No file loaded';}
+  }
+
+  if(els.mappingPanel){els.mappingPanel.innerHTML='';els.mappingPanel.classList.add('hidden');}
+  if(els.cowSearch)els.cowSearch.value='';
+  if(els.errorBox){els.errorBox.textContent='';els.errorBox.classList.add('hidden');}
+  if(els.report)els.report.classList.add('hidden');
+  if(els.viewReportBtn)els.viewReportBtn.classList.add('hidden');
+  if(els.generateBtn){els.generateBtn.disabled=false;els.generateBtn.textContent='Generate report';}
+  if(els.generateStatus)els.generateStatus.textContent='';
+
+  syncHerdTestSafety();
+  updatePrescriptionFields();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+els.newFarmBtn?.addEventListener('click',resetForNewFarm);
 function exportCowRecommendations(){
   if(!state.result)return;
   const rows=[['Cow Tag','Latest SCC','Pre-dry SCC','Pregnancy Diagnosis','Expected Calving Date','BCS','Individual DCT Recommendation','Dry-off Advice','Dry-period SCC Status','Data Note','Mastaplex Result']];

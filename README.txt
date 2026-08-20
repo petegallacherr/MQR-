@@ -1,4 +1,12 @@
-MQR & DCT Consult — Draft 0.7.18
+MQR & DCT Consult — Draft 0.7.19
+0.7.19 changes:
+- Added a New farm / Start new report button to the generated report header.
+- The action requires confirmation before clearing the current consultation.
+- Reset clears farm/client details, uploaded file data and file controls, generated results, cow search, warnings and report state.
+- Agreed defaults are restored for the new consultation, including SCC thresholds and current season year.
+- The page returns to the top ready for the next farm.
+- Service-worker cache bumped to v0719.
+
 0.7.18 changes:
 - Added a herd-test count safety guard to prevent the wrong current-season test count from skewing individual-cow SCC and DCT recommendations.
 - Dated MINDA SCC headings are now authoritative: the app auto-detects, displays and locks the current-season herd-test count for the selected 1 June–31 May season.
