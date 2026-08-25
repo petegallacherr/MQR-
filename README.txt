@@ -1,6 +1,15 @@
-MQR & DCT Consult — Draft 0.7.25
+MQR & DCT Consult — Draft 0.7.26
 
-Version 0.7.25
+Version 0.7.26
+
+0.7.26 changes:
+- Rebalanced the monthly mastitis detail table for easier on-screen and PDF reading.
+- Shortened the two long treatment headings to "Clinical cases" and "NSAID tx only".
+- Moved "Included in trigger %" / "Not included in trigger %" onto smaller second-line sub-headings.
+- Gave the two case columns matching widths so they remain visually balanced.
+- No mastitis case-counting, SMARTSAMM trigger, SCC, DCT, Mastaplex, or AMR calculation changes.
+- Service-worker cache bumped to v0726.
+
 
 0.7.25 changes:
 - Clarified the monthly mastitis trend table headings.

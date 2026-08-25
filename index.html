@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#5c4b3a" />
-  <title>MQR & DCT Consult — Draft 0.7.25</title>
+  <title>MQR & DCT Consult — Draft 0.7.26</title>
   <link rel="manifest" href="manifest.webmanifest" />
-  <link rel="stylesheet" href="styles.css?v=0725" />
+  <link rel="stylesheet" href="styles.css?v=0726" />
 </head>
 <body>
   <header class="topbar">
@@ -15,7 +15,7 @@
       <h1>MQR & DCT Consult</h1>
       <p class="subtitle">Milk quality review, treatment analysis and dry cow consultation from farm data exports.</p>
     </div>
-    <span class="pill">Draft 0.7.25</span>
+    <span class="pill">Draft 0.7.26</span>
   </header>
 
   <main class="page-shell">
@@ -201,7 +201,17 @@
         <h4 class="monthly-detail-title">Monthly detail</h4>
         <div class="table-wrap no-max">
           <table class="compact-table" id="monthlyTable">
-            <thead><tr><th>Month</th><th>Clinical cases — included in trigger %</th><th>NSAID tx only — not included in trigger %</th><th>Heifer cases</th><th>MA cases</th><th>Monthly %</th><th>Trigger</th><th>Cumulative %</th></tr></thead>
+            <colgroup>
+              <col class="month-col" />
+              <col class="case-col" />
+              <col class="case-col" />
+              <col class="metric-col" />
+              <col class="metric-col" />
+              <col class="metric-col" />
+              <col class="metric-col" />
+              <col class="metric-col" />
+            </colgroup>
+            <thead><tr><th>Month</th><th><span class="th-main">Clinical cases</span><span class="th-sub">Included in trigger %</span></th><th><span class="th-main">NSAID tx only</span><span class="th-sub">Not included in trigger %</span></th><th>Heifer cases</th><th>MA cases</th><th>Monthly %</th><th>Trigger</th><th>Cumulative %</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -303,6 +313,6 @@
     </section>
   </main>
 
-  <script src="app.js?v=0725"></script>
+  <script src="app.js?v=0726"></script>
 </body>
 </html>

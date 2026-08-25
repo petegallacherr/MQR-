@@ -159,3 +159,14 @@
 .dct-reason strong{font-size:11.5px;color:var(--ink)}
 .dct-reason span{font-size:10px;color:var(--muted)}
 @media(max-width:980px){.recommendation-guide{grid-template-columns:1fr}}
+
+
+/* v0.7.26 — balanced monthly detail headings */
+#monthlyTable{table-layout:fixed;min-width:900px}
+#monthlyTable col.month-col{width:10%}
+#monthlyTable col.case-col{width:17%}
+#monthlyTable col.metric-col{width:11.2%}
+#monthlyTable th{vertical-align:middle;white-space:normal;line-height:1.15}
+#monthlyTable .th-main{display:block;font-weight:900}
+#monthlyTable .th-sub{display:block;margin-top:3px;font-size:9px;font-weight:650;line-height:1.15;opacity:.82}
+@media print{#monthlyTable{min-width:0;font-size:10px}#monthlyTable th{padding:8px 6px}#monthlyTable td{padding:7px 6px}#monthlyTable .th-sub{font-size:8px}}
