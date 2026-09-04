@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#5c4b3a" />
-  <title>MQR & DCT Consult — Draft 0.7.26</title>
+  <title>MQR & DCT Consult — Draft 0.7.27</title>
   <link rel="manifest" href="manifest.webmanifest" />
-  <link rel="stylesheet" href="styles.css?v=0726" />
+  <link rel="stylesheet" href="styles.css?v=0727" />
 </head>
 <body>
   <header class="topbar">
@@ -15,13 +15,56 @@
       <h1>MQR & DCT Consult</h1>
       <p class="subtitle">Milk quality review, treatment analysis and dry cow consultation from farm data exports.</p>
     </div>
-    <span class="pill">Draft 0.7.26</span>
+    <span class="pill">Draft 0.7.27</span>
   </header>
 
   <main class="page-shell">
     <section class="notice">
       <strong>Report-build draft.</strong> This version applies the agreed SCC cure/new/retained logic, groups treatment rows into clinical case events, and reports missing data as unavailable rather than silently treating it as zero. It remains a prototype for validation before clinical use.
     </section>
+
+    <details class="card instructions-card" id="instructions" open>
+      <summary>
+        <span class="instructions-icon" aria-hidden="true">?</span>
+        <span>
+          <strong>First-time user guide</strong>
+          <small>What to export from MINDA / Mastaplex and how to use the report</small>
+        </span>
+        <span class="instructions-toggle">Show / hide</span>
+      </summary>
+      <div class="instructions-body">
+        <div class="quick-start-grid">
+          <div class="quick-start-item"><span>1</span><div><strong>Enter the consultation details</strong><small>Select the season start year. A 2025 season means 1 June 2025 to 31 May 2026.</small></div></div>
+          <div class="quick-start-item"><span>2</span><div><strong>Upload the original exports</strong><small>Do not rename columns, delete older herd tests, or manually clean the treatment register.</small></div></div>
+          <div class="quick-start-item"><span>3</span><div><strong>Check the upload messages</strong><small>The app will flag herd-test, date-range, mapping, or missing-data issues before you rely on the report.</small></div></div>
+          <div class="quick-start-item"><span>4</span><div><strong>Generate and review</strong><small>Save the farmer PDF, then export the individual-cow recommendations CSV separately if required.</small></div></div>
+        </div>
+
+        <h3>What files do I need?</h3>
+        <div class="instructions-table-wrap">
+          <table class="instructions-table">
+            <thead><tr><th>File</th><th>Where / what to export</th><th>What the app does</th></tr></thead>
+            <tbody>
+              <tr><td><strong>A · Herd / SCC</strong><br><span class="required">Required</span></td><td>Original MINDA Somatic Cell Count / herd-test export. Leave all herd-test columns in the file.</td><td>Dated SCC headings are used to identify the selected season and lock the current-season herd-test count. Older “Most recent / 2nd / 3rd…” files can still be used but require manual confirmation.</td></tr>
+              <tr><td><strong>B · Treatment Register</strong><br><span class="required">Required</span></td><td>MINDA Treatment Register covering the review season. A full register containing non-mastitis treatments is safe to upload.</td><td>The app extracts mastitis records, groups multiple treatment rows for the same cow/date into clinical case events, and keeps NSAID-only records separate from the SMARTSAMM trigger percentage.</td></tr>
+              <tr><td><strong>C · Previous DCT / ITS</strong><br><span class="optional">Optional</span></td><td>Previous dry-off MINDA Treatment Register containing dry-cow antibiotic and teat-sealant treatments.</td><td>Used to summarise previous DCT / sealant use and compare current-season mastitis outcomes. If omitted, those metrics are shown as unavailable.</td></tr>
+              <tr><td><strong>D · Mastaplex / Mastatest</strong><br><span class="optional">Optional</span></td><td>Client culture-results export. It may contain more than one season.</td><td>Only results dated from 1 June to 31 May of the selected season are included. Out-of-season and undated results are excluded and reported in Data coverage.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="instruction-notes-grid">
+          <div class="instruction-note good-note"><strong>Do upload the raw files</strong><span>No need to delete non-mastitis treatments, remove old SCC columns, rename products, or reformat dates before uploading.</span></div>
+          <div class="instruction-note warn-note"><strong>Check the season year</strong><span>If dated MINDA herd tests do not fall inside the selected 1 June–31 May season, report generation is stopped so the season can be corrected.</span></div>
+          <div class="instruction-note"><strong>Historic cows</strong><span>MINDA records marked “H” still count as mastitis events for that season, but cows no longer present in the current herd file are not given current DCT recommendations.</span></div>
+          <div class="instruction-note"><strong>Missing data</strong><span>Blank or zero SCC values are treated as unavailable. An Empty pregnancy status does not require an expected calving date.</span></div>
+        </div>
+
+        <h3>What comes out?</h3>
+        <p class="instructions-copy"><strong>Farmer PDF:</strong> herd-level mastitis trends, SMARTSAMM trigger comparison, treatment / AMR summaries, SCC outcomes, previous DCT / ITS, Mastaplex results and DCT order estimate. <strong>Individual-cow recommendations:</strong> remain on screen and are exported as a separate CSV; they are intentionally excluded from the farmer PDF.</p>
+        <p class="instructions-copy subtle"><strong>Tip:</strong> if an upload status or Data coverage message does not look right, fix that before interpreting the clinical outputs. Unknown antimicrobial products are shown as <em>Unclassified</em> rather than assigned an AMR colour by guesswork.</p>
+      </div>
+    </details>
 
     <section class="card">
       <div class="section-heading">
@@ -114,8 +157,8 @@
         </article>
         <article class="upload-card">
           <div class="upload-number">B</div>
-          <h3>Mastitis treatments <span class="required">Required</span></h3>
-          <p>MINDA Treatment Register for the review season. Antibiotic and NSAID rows are joined into a case event by cow and treatment date.</p>
+          <h3>MINDA Treatment Register <span class="required">Required</span></h3>
+          <p>Upload the full Treatment Register for the review season — it does not need to be filtered to mastitis first. The app extracts mastitis records and joins related treatment rows into case events.</p>
           <label class="file-button">Choose file<input id="mastitisFile" type="file" accept=".csv,.xlsx,.xls" /></label>
           <div id="mastitisStatus" class="file-status neutral">No file loaded</div>
         </article>
@@ -313,6 +356,6 @@
     </section>
   </main>
 
-  <script src="app.js?v=0726"></script>
+  <script src="app.js?v=0727"></script>
 </body>
 </html>

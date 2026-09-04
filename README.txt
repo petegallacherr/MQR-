@@ -1,6 +1,17 @@
-MQR & DCT Consult — Draft 0.7.26
+MQR & DCT Consult — Draft 0.7.27
 
-Version 0.7.26
+Version 0.7.27
+
+0.7.27 changes:
+- Added an in-app first-time user guide covering consultation setup, MINDA/Mastaplex exports, upload safeguards, and report outputs.
+- Added a clear required/optional file table for Herd/SCC, full MINDA Treatment Register, previous DCT/ITS, and Mastaplex/Mastatest.
+- Clarified that the full unfiltered MINDA Treatment Register is safe to upload; non-mastitis treatment rows do not need to be manually removed.
+- Added guidance for season-year checks, dated vs legacy SCC headings, historic animals, missing SCC data, and Mastaplex seasonal filtering.
+- Clarified that individual-cow recommendations are exported separately as CSV and intentionally excluded from the farmer PDF.
+- Updated the Treatment Register upload-card wording to match the validated full-register workflow.
+- No mastitis, SCC, DCT, SMARTSAMM, Mastaplex, AMR, or order-estimate calculation changes.
+- Service-worker cache bumped to v0727.
+
 
 0.7.26 changes:
 - Rebalanced the monthly mastitis detail table for easier on-screen and PDF reading.
